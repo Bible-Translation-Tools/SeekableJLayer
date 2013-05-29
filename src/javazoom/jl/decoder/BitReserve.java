@@ -33,8 +33,10 @@ package javazoom.jl.decoder;
  * The implementation stores single bits as a word in the buffer. If
  * a bit is set, the corresponding word in the buffer will be non-zero.
  * If a bit is clear, the corresponding word is zero. Although this
- * may seem waseful, this can be a factor of two quicker than 
+ * may seem wasteful, this can be a factor of two quicker than 
  * packing 8 bits to a byte and extracting. 
+ * 
+ * WVB - is this still true. This feels as if it were a C++ world
  * <p> 
  */
 
@@ -57,9 +59,8 @@ final class BitReserve
 	
 	private int 					offset, totbit, buf_byte_idx;
 	private final int[] 			buf = new int[BUFSIZE];
-	private int 					buf_bit_idx;
 	
-   BitReserve()
+	BitReserve()
    {
 	  
 	  offset = 0;

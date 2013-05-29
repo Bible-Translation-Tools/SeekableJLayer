@@ -34,11 +34,9 @@ package javazoom.jl.decoder;
  */
 class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 {
-
 	public LayerIIDecoder()
 	{
 	}
-
 	
 	protected void createSubbands()
 	{		
@@ -61,7 +59,7 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		
 	}
 	
-	protected void readScaleFactorSelection()
+	protected void readScaleFactorSelection() throws BitstreamException
 	{
   		for (int i = 0; i < num_subbands; ++i)
   		  ((SubbandLayer2)subbands[i]).read_scalefactor_selection(stream, crc);		
@@ -613,9 +611,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 					 
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_allocation(Bitstream stream, Header header, Crc16 crc)
+	  public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws BitstreamException
 	  {
 		 int length = get_allocationlength(header);
 		 allocation = stream.get_bits(length);
@@ -624,9 +623,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor_selection (Bitstream stream, Crc16 crc)
+	  public void read_scalefactor_selection (Bitstream stream, Crc16 crc) throws BitstreamException
 	  {
 	 	if (allocation != 0)
 	 	{
@@ -636,9 +636,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor (Bitstream stream, Header header)
+	  public void read_scalefactor (Bitstream stream, Header header) throws BitstreamException
 	  {
 	 	if (allocation != 0)
 	 	{
@@ -667,9 +668,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public boolean read_sampledata (Bitstream stream)
+	  public boolean read_sampledata (Bitstream stream) throws BitstreamException
 	  {
 	  	if (allocation != 0)
 		 if (groupingtable[0] != null)
@@ -746,7 +748,7 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	 /**
 	  * Class for layer II subbands in joint stereo mode.
 	  */
-	static class SubbandLayer2IntensityStereo extends SubbandLayer2
+	private static class SubbandLayer2IntensityStereo extends SubbandLayer2
 	{
 	  protected int		 channel2_scfsi;
 	  protected float 	 channel2_scalefactor1, channel2_scalefactor2, channel2_scalefactor3;
@@ -760,17 +762,19 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_allocation(Bitstream stream, Header header, Crc16 crc)
+	  public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws BitstreamException
 	  {
 	    super.read_allocation (stream, header, crc);
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor_selection(Bitstream stream, Crc16 crc)
+	  public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws BitstreamException
 	  {
 	    if (allocation != 0)
 	    {
@@ -785,9 +789,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor(Bitstream stream, Header header)
+	  public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
 	  {
 	    if (allocation != 0)
 	    {
@@ -820,9 +825,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public boolean read_sampledata(Bitstream stream)
+	  public boolean read_sampledata(Bitstream stream) throws BitstreamException
 	  {
 		 return super.read_sampledata (stream);
 	  }
@@ -891,7 +897,7 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	 /**
 	  * Class for layer II subbands in stereo mode.
 	  */
-	static class SubbandLayer2Stereo extends SubbandLayer2
+	private static class SubbandLayer2Stereo extends SubbandLayer2
 	{
 	  protected int			channel2_allocation;
 	  protected int 		channel2_scfsi;
@@ -914,9 +920,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_allocation (Bitstream stream, Header header, Crc16 crc)
+	  public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws BitstreamException
 	  {
 	    int length = get_allocationlength(header);
 	    allocation = stream.get_bits(length);
@@ -929,9 +936,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor_selection(Bitstream stream, Crc16 crc)
+	  public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws BitstreamException
 	  {
 		  if (allocation != 0)
 		  {
@@ -948,9 +956,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor(Bitstream stream, Header header)
+	  public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
 	  {
 	    super.read_scalefactor(stream, header);
 	    if (channel2_allocation != 0)
@@ -987,9 +996,10 @@ class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public boolean read_sampledata (Bitstream stream)
+	  public boolean read_sampledata (Bitstream stream) throws BitstreamException
 	  {
 	    boolean returnvalue = super.read_sampledata(stream);
 	  

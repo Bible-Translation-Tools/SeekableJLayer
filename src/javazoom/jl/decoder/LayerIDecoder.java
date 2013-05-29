@@ -60,7 +60,7 @@ class LayerIDecoder implements FrameDecoder
 		  
 	}
 	
-	public void decodeFrame() throws DecoderException
+	public void decodeFrame() throws DecoderException, BitstreamException
 	{
 		
 		num_subbands = header.number_of_subbands();
@@ -101,7 +101,7 @@ class LayerIDecoder implements FrameDecoder
   	    }		
 	}
 	
-	protected void readAllocation() throws DecoderException
+	protected void readAllocation() throws DecoderException, BitstreamException
 	{
 		// start to read audio data:
   	    for (int i = 0; i < num_subbands; ++i)
@@ -109,18 +109,18 @@ class LayerIDecoder implements FrameDecoder
 		
 	}
 
-	protected void readScaleFactorSelection()
+	protected void readScaleFactorSelection() throws BitstreamException
 	{
 		// scale factor selection not present for layer I. 
 	}
 	
-	protected void readScaleFactors()
+	protected void readScaleFactors() throws BitstreamException
 	{
 		for (int i = 0; i < num_subbands; ++i)
   		  subbands[i].read_scalefactor(stream, header);  		
 	}
 	
-	protected void readSampleData()
+	protected void readSampleData() throws BitstreamException
 	{
 		boolean read_ready = false;
 		boolean write_ready = false;
@@ -135,9 +135,9 @@ class LayerIDecoder implements FrameDecoder
   		  	for (i = 0; i < num_subbands; ++i)
   		  		write_ready = subbands[i].put_next_sample(which_channels,filter1, filter2);
 
-  		  	filter1.calculate_pcm_samples(buffer);
+  		  	filter1.calculate_pcm_samples_layer_i_ii(buffer);
   		  	if ((which_channels == OutputChannels.BOTH_CHANNELS) && (mode != Header.SINGLE_CHANNEL))
-           		filter2.calculate_pcm_samples(buffer);
+           		filter2.calculate_pcm_samples_layer_i_ii(buffer);
   		  } while (!write_ready);
   		} while (!read_ready);
 		
@@ -174,9 +174,9 @@ class LayerIDecoder implements FrameDecoder
 	  0.00000190734863f, 0.00000151386361f, 0.00000120155435f, 0.00000000000000f /* illegal scalefactor */
 	  };
 
-	  public abstract void read_allocation (Bitstream stream, Header header, Crc16 crc) throws DecoderException;
-	  public abstract void read_scalefactor (Bitstream stream, Header header);
-	  public abstract boolean read_sampledata (Bitstream stream);
+	  public abstract void read_allocation (Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException;
+	  public abstract void read_scalefactor (Bitstream stream, Header header) throws BitstreamException;
+	  public abstract boolean read_sampledata (Bitstream stream) throws BitstreamException;
 	  public abstract boolean put_next_sample (int channels, SynthesisFilter filter1, SynthesisFilter filter2);
 	};
 	
@@ -185,7 +185,7 @@ class LayerIDecoder implements FrameDecoder
 	 * Used for single channel mode
 	 * and in derived class for intensity stereo mode
 	 */
-	static class SubbandLayer1 extends Subband
+	private static class SubbandLayer1 extends Subband
 	{
 
 	  // Factors and offsets for sample requantization
@@ -225,9 +225,9 @@ class LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
-	   *
+	   * @throws BitstreamException 
 	   */
-	  public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws DecoderException
+	  public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException
 	  {
 	    if ((allocation = stream.get_bits (4)) == 15) 
 	    {
@@ -247,17 +247,19 @@ class LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor(Bitstream stream, Header header)
+	  public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
 	  {
 	    if (allocation != 0) scalefactor = scalefactors[stream.get_bits(6)];
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public boolean read_sampledata(Bitstream stream)
+	  public boolean read_sampledata(Bitstream stream) throws BitstreamException
 	  {
 	    if (allocation != 0)
 	    {
@@ -301,17 +303,19 @@ class LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws DecoderException
+	  public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException
 	  {
 	    super.read_allocation (stream, header, crc);
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor (Bitstream stream, Header header)
+	  public void read_scalefactor (Bitstream stream, Header header) throws BitstreamException
 	  {
 	    if (allocation != 0)
 	    {
@@ -321,9 +325,10 @@ class LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public boolean read_sampledata(Bitstream stream)
+	  public boolean read_sampledata(Bitstream stream) throws BitstreamException
 	  {
 	  	 return super.read_sampledata (stream);
 	  }
@@ -379,9 +384,10 @@ class LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws DecoderException
+	  public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException
 	  {
 	 	 allocation = stream.get_bits(4);
 	     channel2_allocation = stream.get_bits(4);
@@ -405,18 +411,20 @@ class LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor(Bitstream stream, Header header)
+	  public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
 	  {
 	    if (allocation != 0) scalefactor = scalefactors[stream.get_bits(6)];
 	    if (channel2_allocation != 0) channel2_scalefactor = scalefactors[stream.get_bits(6)];
 	  }
 
 	  /**
+	 * @throws BitstreamException 
 	   *
 	   */
-	  public boolean read_sampledata (Bitstream stream)
+	  public boolean read_sampledata (Bitstream stream) throws BitstreamException
 	  {
 	     boolean returnvalue = super.read_sampledata(stream);
 	     if (channel2_allocation != 0)
@@ -443,6 +451,11 @@ class LayerIDecoder implements FrameDecoder
 	     }
 	     return true;
 	  }
+	}
+
+	@Override
+	public void seek_notify() 
+	{
 	};
 	
 }
