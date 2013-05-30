@@ -48,9 +48,9 @@ final class HuffcodeTable
 	private final boolean quadrupple;
 	private final int	  xlast; 	
 	private final int	  ylast;	
-	private final int	  linbits; 		  /* number of linbits   	                  */
-	private final int[][] val;		 	  /* decoder tree		    	              */
-	private final int 	  treelen;	      /* length of decoder tree  	              */
+	private final int	  linbits; 	 // number of linbits   	                  
+	private final int[][] val;		 // decoder tree		    	              
+	private final int 	  treelen;	 // length of decoder tree  	
 
 	private static final int VAL_TAB_DUMMY[][] = {
 		{0,0}	// dummy
@@ -474,7 +474,7 @@ final class HuffcodeTable
 			}
 			level >>>= 1;
 			// MDM: ht[0] is always 0;
-		} while ((level !=0 )  || (point < 0 /*ht[0].treelen*/) );
+		} while ((level !=0 )  || (point < 0) );
 
 		/* Process sign encodings for quadruples tables. */
 		if (h.quadrupple)
