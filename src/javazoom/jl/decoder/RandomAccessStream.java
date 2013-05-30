@@ -106,7 +106,7 @@ public class RandomAccessStream extends InputStream
 		return retrievalPosition-oldRetrievalPos;
 	}
 
-	public void unread(int howmany)
+	void unread(int howmany)
 	{
 		retrievalPosition -= howmany;
 		if (retrievalPosition<0) retrievalPosition=0;

@@ -31,7 +31,6 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
-
 package javazoom.jl.decoder;
 
 /**
@@ -41,38 +40,38 @@ package javazoom.jl.decoder;
  */
 final class LayerIIIDecoder implements FrameDecoder
 {
-	final double d43 = (4.0/3.0);
-
-	public int[]				scalefac_buffer;
+	private final static double D43 = 4.0/3.0;
+	private static final float SCALE_FACTOR = 32760;
+	private final int[]			scalefac_buffer;
 
 	// MDM: removed, as this wasn't being used.
 	//private float               CheckSumOut1d = 0.0f;
 	private int                 CheckSumHuff = 0;
-	private int[] 				is_1d;
-	private float[][][]			ro;
-	private float[][][]			lr;
-	private float[]				out_1d;
-	private float[][]		    prevblck;
-	private float[][]			k;
-	private int[] 				nonzero;
-	private Bitstream 			stream;
-	private Header 				header;
-	private SynthesisFilter 	filter1, filter2;
-	private Obuffer 			buffer;
-	private int 				which_channels;
-	private BitReserve 			br;
-	private III_side_info_t 	si;
+	private final int[] 		is_1d;
+	private final float[][][]	ro;
+	private final float[][][]	lr;
+	private final float[]		out_1d;
+	private final float[][]		prevblck;
+	private final float[][]		k;
+	private final int[] 		nonzero;
+	private final Bitstream 	stream;
+	private final Header 		header;
+	private final SynthesisFilter 	filter1, filter2;
+	private final Obuffer 			buffer;
+	private final int 				which_channels;
+	private BitReserve 				br;
+	private final III_side_info_t 	si;
 
-	private temporaire2[]        III_scalefac_t;
-	private temporaire2[]        scalefac;
+	private final temporaire2[]        III_scalefac_t;
+	private final temporaire2[]        scalefac;
 
-	private int 				max_gr;
+	private final int 				max_gr;
 	private int					frame_start;
 	private int 				part2_start;
-	private int 				channels;
-	private int 				first_channel;
-	private int 				last_channel;
-	private int					sfreq;
+	private final int 				channels;
+	private final int 				first_channel;
+	private final int 				last_channel;
+	private final int					sfreq;
 
 
 	/**
@@ -140,12 +139,6 @@ final class LayerIIIDecoder implements FrameDecoder
 			for(int i = 0; i < 9; i++)
 				reorder_table[i] = reorder(sfBandIndex[i].s);
 		}
-
-		// Sftable
-		int[] ll0 = {0, 6, 11, 16, 21};
-		int[] ss0 = {0, 6, 12};
-		sftable = new Sftable(ll0,ss0);
-		// END OF Sftable
 
 		// scalefac_buffer
 		scalefac_buffer = new int[54];
@@ -221,7 +214,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	/**
 	 * Decode one frame, filling the buffer with the output samples.
 	 */
-	public void decode() throws BitstreamException
+	private void decode() throws BitstreamException
 	{
 		final int nSlots = header.slots();
 		final int flush_main;
@@ -285,7 +278,7 @@ final class LayerIIIDecoder implements FrameDecoder
 
 					reorder(lr[ch], ch, gr);
 					antialias(ch, gr);
-					
+
 					hybrid(ch, gr);
 
 					for (sb18=18;sb18<576;sb18+=36) // Frequency inversion
@@ -298,11 +291,10 @@ final class LayerIIIDecoder implements FrameDecoder
 						{
 							// Polyphase synthesis
 							final float[] samples1 = filter1.samples;
-							final float[] eq = filter1.eq;
 							sb = 0;
 							for (sb18=0; sb18<576; sb18+=18) 
 							{
-								samples1[sb] = out_1d[sb18+ss] * eq[sb];
+								samples1[sb] = out_1d[sb18+ss] * SCALE_FACTOR;
 								sb++;
 							}
 							filter1.calculate_pcm_samples_layer_iii(buffer);
@@ -314,11 +306,10 @@ final class LayerIIIDecoder implements FrameDecoder
 						{ 
 							// Polyphase synthesis
 							final float[] samples2 = filter2.samples;
-							final float[] eq = filter2.eq;
 							sb = 0;
 							for (sb18=0; sb18<576; sb18+=18) 
 							{
-								samples2[sb] = out_1d[sb18+ss] * eq[sb];
+								samples2[sb] = out_1d[sb18+ss] * SCALE_FACTOR;
 								sb++;
 							}
 							filter2.calculate_pcm_samples_layer_iii(buffer);
@@ -343,8 +334,9 @@ final class LayerIIIDecoder implements FrameDecoder
 
 			si.main_data_begin = stream.get_bits(9);
 			if (channels == 1)
-				si.private_bits = stream.get_bits(5);
-			else si.private_bits = stream.get_bits(3);
+				stream.get_bits(5);
+			else
+				stream.get_bits(3);
 
 			for (ch=0; ch<channels; ch++) {
 				si.ch[ch].scfsi[0] = stream.get_bits(1);
@@ -402,8 +394,9 @@ final class LayerIIIDecoder implements FrameDecoder
 
 			si.main_data_begin = stream.get_bits(8);
 			if (channels == 1)
-				si.private_bits = stream.get_bits(1);
-			else si.private_bits = stream.get_bits(2);
+				stream.get_bits(1);
+			else
+				stream.get_bits(2);
 
 			for (ch=0; ch<channels; ch++) {
 
@@ -711,16 +704,13 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 	}
 
-	int[] x = {0};
-	int[] y = {0};
-	int[] v = {0};
-	int[] w = {0};
+	private final huffcodetab.Xyvw xyvw = new huffcodetab.Xyvw(); 
 	private void huffman_decode(int ch, int gr)
 	{
-		x[0] = 0;
-		y[0] = 0;
-		v[0] = 0;
-		w[0] = 0;
+		xyvw.x = 0;
+		xyvw.y = 0;
+		xyvw.v = 0;
+		xyvw.w = 0;
 
 		int part2_3_end = part2_start + si.ch[ch].gr[gr].part2_3_length;
 		int num_bits;
@@ -755,32 +745,31 @@ final class LayerIIIDecoder implements FrameDecoder
 
 		index = 0;
 		// Read bigvalues area
-		for (int i=0; i<(si.ch[ch].gr[gr].big_values<<1); i+=2) {
+		for (int i=0; i<(si.ch[ch].gr[gr].big_values<<1); i+=2)
+		{
 			if      (i<region1Start) h = huffcodetab.ht[si.ch[ch].gr[gr].table_select[0]];
 			else if (i<region2Start) h = huffcodetab.ht[si.ch[ch].gr[gr].table_select[1]];
-			else                h = huffcodetab.ht[si.ch[ch].gr[gr].table_select[2]];
+			else                     h = huffcodetab.ht[si.ch[ch].gr[gr].table_select[2]];
 
-			huffcodetab.huffman_decoder(h, x, y, v, w, br);
+			huffcodetab.huffman_decoder(h, xyvw, br);
 
-			is_1d[index++] = x[0];
-			is_1d[index++] = y[0];
-
-			CheckSumHuff = CheckSumHuff + x[0] + y[0];
+			is_1d[index++] = xyvw.x;
+			is_1d[index++] = xyvw.y;
+			CheckSumHuff = CheckSumHuff + xyvw.x + xyvw.y;
 		}
 
 		// Read count1 area
 		h = huffcodetab.ht[si.ch[ch].gr[gr].count1table_select+32];
 		num_bits = br.hsstell();
 
-		while ((num_bits < part2_3_end) && (index < 576)) {
-
-			huffcodetab.huffman_decoder(h, x, y, v, w, br);
-
-			is_1d[index++] = v[0];
-			is_1d[index++] = w[0];
-			is_1d[index++] = x[0];
-			is_1d[index++] = y[0];
-			CheckSumHuff = CheckSumHuff + v[0] + w[0] + x[0] + y[0];
+		while ((num_bits < part2_3_end) && (index < 576))
+		{
+			huffcodetab.huffman_decoder(h, xyvw, br);
+			is_1d[index++] = xyvw.v;
+			is_1d[index++] = xyvw.w;
+			is_1d[index++] = xyvw.x;
+			is_1d[index++] = xyvw.y;
+			CheckSumHuff = CheckSumHuff + xyvw.v + xyvw.w + xyvw.x + xyvw.y;
 			num_bits = br.hsstell();
 		}
 
@@ -868,13 +857,13 @@ final class LayerIIIDecoder implements FrameDecoder
 					else
 					{
 						if (-abv < t_43.length) xr_1d[quotien][reste] = -g_gain * t_43[-abv];
-						else xr_1d[quotien][reste] = -g_gain * (float)Math.pow(-abv, d43);	
+						else xr_1d[quotien][reste] = -g_gain * (float)Math.pow(-abv, D43);	
 					} 
 				}
 				else
 				{
-					if (is_1d[j] > 0) xr_1d[quotien][reste] = g_gain * (float)Math.pow(abv, d43);
-					else xr_1d[quotien][reste] = -g_gain * (float)Math.pow(-abv, d43);	         	
+					if (is_1d[j] > 0) xr_1d[quotien][reste] = g_gain * (float)Math.pow(abv, D43);
+					else xr_1d[quotien][reste] = -g_gain * (float)Math.pow(-abv, D43);	         	
 				}
 			}
 		}
@@ -1065,8 +1054,8 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 	}
 
-	int[] is_pos = new int[576];
-	float[] is_ratio = new float[576];
+	private final int[] is_pos = new int[576];
+	private final float[] is_ratio = new float[576];
 
 	private void stereo(int gr)
 	{
@@ -1381,8 +1370,8 @@ final class LayerIIIDecoder implements FrameDecoder
 
 	// MDM: tsOutCopy and rawout do not need initializing, so the arrays
 	// can be reused.
-	float[] tsOutCopy = new float[18];
-	float[] rawout = new float[36];
+	private final float[] tsOutCopy = new float[18];
+	private final float[] rawout = new float[36];
 
 	private void hybrid(int ch, int gr)
 	{
@@ -1466,7 +1455,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	/**
 	 * Fast INV_MDCT.
 	 */
-	public void inv_mdct(float[] in, float[] out, int block_type)
+	private void inv_mdct(float[] in, float[] out, int block_type)
 	{
 		float[] win_bt;
 		int   i;
@@ -1761,17 +1750,12 @@ final class LayerIIIDecoder implements FrameDecoder
 	/************************************************************/
 	/*                            L3TABLE                       */
 	/************************************************************/
-	static class SBI
+	private static class SBI
 	{
-		public int[] 		l;
-		public int[] 		s;
+		private final int[] l;
+		private final int[] s;
 
-		public SBI()
-		{
-			l = new int[23];
-			s = new int[14];
-		}
-		public SBI(int[] thel, int[] thes)
+		private SBI(int[] thel, int[] thes)
 		{
 			l = thel;
 			s = thes;
@@ -1824,9 +1808,7 @@ final class LayerIIIDecoder implements FrameDecoder
 
 	private static class III_side_info_t
 	{
-
 		public int 				main_data_begin = 0;
-		public int 				private_bits = 0;
 		public temporaire[]		ch;
 		/**
 		 * Dummy Constructor
@@ -1860,12 +1842,12 @@ final class LayerIIIDecoder implements FrameDecoder
 		{0, 1, 2, 3, 0, 1, 2, 3, 1, 2, 3, 1, 2, 3, 2, 3}
 		};
 
-	public static final int pretab[] =
+	private static final int pretab[] =
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 3, 2, 0};
 
-	private SBI[]			sfBandIndex; // Init in the constructor.
+	private final SBI[]	sfBandIndex; // Init in the constructor.
 
-	public static final float two_to_negative_half_pow[] =
+	private static final float two_to_negative_half_pow[] =
 		{ 1.0000000000E+00f, 7.0710678119E-01f, 5.0000000000E-01f, 3.5355339059E-01f,
 		2.5000000000E-01f, 1.7677669530E-01f, 1.2500000000E-01f, 8.8388347648E-02f,
 		6.2500000000E-02f, 4.4194173824E-02f, 3.1250000000E-02f, 2.2097086912E-02f,
@@ -1885,21 +1867,17 @@ final class LayerIIIDecoder implements FrameDecoder
 		};
 
 
-	public static final float t_43[] = create_t_43();
+	private static final float t_43[] = create_t_43();
 
 	static private float[] create_t_43()
 	{
 		float[] t43 = new float[8192];
-		final double d43 = (4.0/3.0);
-
 		for (int i=0; i<8192; i++)
-		{
-			t43[i] = (float)Math.pow(i, d43);
-		}
+			t43[i] = (float)Math.pow(i, D43);
 		return t43;
 	}
 
-	public static final float io[][] =
+	private static final float io[][] =
 		{
 		{ 1.0000000000E+00f, 8.4089641526E-01f, 7.0710678119E-01f, 5.9460355751E-01f,
 			5.0000000001E-01f, 4.2044820763E-01f, 3.5355339060E-01f, 2.9730177876E-01f,
@@ -1919,9 +1897,7 @@ final class LayerIIIDecoder implements FrameDecoder
 				6.1035156254E-05f, 4.3158372878E-05f, 3.0517578127E-05f, 2.1579186439E-05f }
 		};
 
-
-
-	public static final float TAN12[] =
+	private static final float TAN12[] =
 		{
 		0.0f, 0.26794919f, 0.57735027f, 1.0f,
 		1.73205081f, 3.73205081f, 9.9999999e10f, -3.73205081f,
@@ -2025,7 +2001,7 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 	}*/
 
-	static int[] reorder(int scalefac_band[]) {	// SZD: converted from LAME
+	private static int[] reorder(int scalefac_band[]) {	// SZD: converted from LAME
 		int j = 0;
 		int ix[] = new int[576];
 		for(int sfb = 0; sfb < 13; sfb++) {
@@ -2287,7 +2263,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	/***************************************************************/
 	/*                             INV_MDCT                        */
 	/***************************************************************/
-	public static final float win[][] =
+	private static final float win[][] =
 		{
 		{ -1.6141214951E-02f, -5.3603178919E-02f, -1.0070713296E-01f, -1.6280817573E-01f,
 			-4.9999999679E-01f, -3.8388735032E-01f, -6.2061144372E-01f, -1.1659756083E+00f,
@@ -2332,34 +2308,11 @@ final class LayerIIIDecoder implements FrameDecoder
 	/***************************************************************/
 	/*                         END OF INV_MDCT                     */
 	/***************************************************************/
-
-	class Sftable
-	{
-		public int[]	 l;
-		public int[]	 s;
-
-		public Sftable()
-		{
-			l = new int[5];
-			s = new int[3];
-		}
-
-		public Sftable(int[] thel, int[] thes)
-		{
-			l = thel;
-			s = thes;
-		}
-	}
-
-	public Sftable				sftable;
-
-	public static final int 	nr_of_sfb_block[][][] =
+	private static final int nr_of_sfb_block[][][] =
 		{{{ 6, 5, 5, 5} , { 9, 9, 9, 9} , { 6, 9, 9, 9}},
 		{{ 6, 5, 7, 3} , { 9, 9,12, 6} , { 6, 9,12, 6}},
 		{{11,10, 0, 0} , {18,18, 0, 0} , {15,18, 0, 0}},
 		{{ 7, 7, 7, 0} , {12,12,12, 0} , { 6,15,12, 0}},
 		{{ 6, 6, 6, 3} , {12, 9, 9, 6} , { 6,12, 9, 6}},
 		{{ 8, 8, 5, 0} , {15,12, 9, 0} , { 6,18, 9, 0}}};
-
-
 }

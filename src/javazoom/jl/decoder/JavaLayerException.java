@@ -32,11 +32,10 @@ import java.io.PrintStream;
  * 
  * @author MDM
  */
+@SuppressWarnings("serial")
 public class JavaLayerException extends Exception
 {
-	
 	private Throwable		exception;
-	
 	
 	public JavaLayerException()
 	{

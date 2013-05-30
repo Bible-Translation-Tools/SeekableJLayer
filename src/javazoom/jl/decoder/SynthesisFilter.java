@@ -57,10 +57,9 @@ final class SynthesisFilter
 	private float[]			 actual_v;					// v1 or v2
 	private int 			 actual_write_pos;	   		// 0-15
 	final float[]			 samples  = new float[32];	// 32 new input subband samples
-	private int				 channel;
-	final float[]			 eq;
+	private final int		 channel;
 
-	public SynthesisFilter(int channelnumber, float[] eq)
+	public SynthesisFilter(int channelnumber)
 	{  	 
 		if (d==null)
 		{
@@ -71,14 +70,13 @@ final class SynthesisFilter
 		v1 = new float[512];
 		v2 = new float[512];
 		channel = channelnumber;
-		this.eq=eq;
 		reset();
 	}
 
 	/**
 	 * Reset the synthesis filter.
 	 */
-	public void reset()
+	private void reset()
 	{
 		for (int p=0;p<512;p++) 
 			v1[p] = v2[p] = 0.0f;
@@ -95,7 +93,7 @@ final class SynthesisFilter
 	 */
 	public void input_sample(float sample, int subbandnumber)
 	{	 	 		  
-		samples[subbandnumber] = eq[subbandnumber] * sample;
+		samples[subbandnumber] = sample;
 	}
 
 	/**
@@ -1146,6 +1144,7 @@ final class SynthesisFilter
 	 * Loads the data for the d[] from the resource SFd.ser. 
 	 * @return the loaded values for d[].
 	 */
+	@SuppressWarnings("rawtypes")
 	static private float[] load_d()
 	{
 		try

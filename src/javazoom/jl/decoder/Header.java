@@ -40,7 +40,7 @@ public final class Header
 	 * The frequency table:
 	 * h_version x sample_frequency_idx
 	 */
-	public  static final int[][]	frequencies =
+	private static final int[][] frequencies =
 		{{22050, 24000, 16000, 1},
 		{44100, 48000, 32000, 1},
 		{11025, 12000, 8000, 1}};	// SZD: MPEG25
@@ -48,21 +48,21 @@ public final class Header
 	/**
 	 * Constant for MPEG-2 LSF version
 	 */
-	public static final int		MPEG2_LSF = 0;
-	public static final int		MPEG25_LSF = 2;	// SZD
+	static final int		MPEG2_LSF = 0;
+	static final int		MPEG25_LSF = 2;	// SZD
 
 	/**
 	 * Constant for MPEG-1 version
 	 */
-	public static final int		MPEG1 = 1;
+	static final int		MPEG1 = 1;
 
-	public static final int		STEREO = 0;
-	public static final int		JOINT_STEREO = 1;
-	public static final int		DUAL_CHANNEL = 2;
-	public static final int		SINGLE_CHANNEL = 3;
-	public static final int		FOURTYFOUR_POINT_ONE = 0;
-	public static final int		FOURTYEIGHT=1;
-	public static final int		THIRTYTWO=2;
+	private static final int		STEREO = 0;
+	static final int		JOINT_STEREO = 1;
+	private static final int		DUAL_CHANNEL = 2;
+	static final int		SINGLE_CHANNEL = 3;
+	private static final int		FOURTYFOUR_POINT_ONE = 0;
+	private static final int		FOURTYEIGHT=1;
+	private static final int		THIRTYTWO=2;
 
 	private int				h_layer, h_protection_bit, h_bitrate_index,
 	h_padding_bit, h_mode_extension;
@@ -70,27 +70,28 @@ public final class Header
 	private int				h_mode;
 	private int				h_sample_frequency;
 	private int				h_number_of_subbands, h_intensity_stereo_bound;
-	private boolean			h_copyright, h_original;
+//	private boolean			h_copyright, h_original;
 	// VBR support added by E.B
-	private double[] 		h_vbr_time_per_frame = {-1, 384, 1152, 1152};
+	private final double[] 		h_vbr_time_per_frame = {-1, 384, 1152, 1152};
 	private boolean			h_vbr;
 	private int				h_vbr_frames;
-	private int				h_vbr_scale;
+//	private int				h_vbr_scale;
 	private int				h_vbr_bytes;
 	private byte[]			h_vbr_toc;
 
 	private byte			syncmode = Bitstream.INITIAL_SYNC;
 	private Crc16			crc;
 
-	public short			checksum;
-	public int				framesize;
-	public int				nSlots;
+	private short			checksum;
+	private int				framesize;
+	private int				nSlots;
 
-	private int				_headerstring = -1; // E.B
+//	private int				_headerstring = -1; // E.B
 
 	Header()
 	{
 	}
+	
 	public String toString()
 	{
 		StringBuffer buffer = new StringBuffer(200);
@@ -124,7 +125,7 @@ public final class Header
 		do
 		{
 			headerstring = stream.syncHeader(syncmode);
-			_headerstring = headerstring; // E.B
+//			_headerstring = headerstring; // E.B
 			if (syncmode == Bitstream.INITIAL_SYNC)
 			{
 				h_version = ((headerstring >>> 19) & 1);
@@ -148,10 +149,11 @@ public final class Header
 				h_intensity_stereo_bound = (h_mode_extension << 2) + 4;
 			else
 				h_intensity_stereo_bound = 0; // should never be used
-			if (((headerstring >>> 3) & 1) == 1)
+/*			if (((headerstring >>> 3) & 1) == 1)
 				h_copyright = true;
 			if (((headerstring >>> 2) & 1) == 1)
 				h_original = true;
+*/
 			// calculate number of subbands:
 			if (h_layer == 1)
 				h_number_of_subbands = 32;
@@ -267,7 +269,7 @@ public final class Header
 				h_vbr = true;
 				h_vbr_frames = -1;
 				h_vbr_bytes = -1;
-				h_vbr_scale = -1;
+//				h_vbr_scale = -1;
 				h_vbr_toc = new byte[100];
 
 				int length = 4;
@@ -299,7 +301,7 @@ public final class Header
 				if ((flags[3] & (byte) (1 << 3)) != 0)
 				{
 					System.arraycopy(firstframe, offset + length, tmp, 0, tmp.length);
-					h_vbr_scale = (tmp[0] << 24)&0xFF000000 | (tmp[1] << 16)&0x00FF0000 | (tmp[2] << 8)&0x0000FF00 | tmp[3]&0x000000FF;
+//					h_vbr_scale = (tmp[0] << 24)&0xFF000000 | (tmp[1] << 16)&0x00FF0000 | (tmp[2] << 8)&0x0000FF00 | tmp[3]&0x000000FF;
 					length += 4;	
 				}		
 			}				
@@ -322,7 +324,7 @@ public final class Header
 				h_vbr = true;
 				h_vbr_frames = -1;
 				h_vbr_bytes = -1;
-				h_vbr_scale = -1;
+//				h_vbr_scale = -1;
 				h_vbr_toc = new byte[100];
 				// Bytes.				
 				int length = 4 + 6;
@@ -346,98 +348,60 @@ public final class Header
 	/**
 	 * Returns version.
 	 */
-	public int version() { return h_version; }
+	int version() { return h_version; }
 
 	/**
 	 * Returns Layer ID.
 	 */
-	public int layer() { return h_layer; }
+	int layer() { return h_layer; }
 
 	/**
 	 * Returns bitrate index.
 	 */
-	public int bitrate_index() { return h_bitrate_index; }
+	int bitrate_index() { return h_bitrate_index; }
 
 	/**
 	 * Returns Sample Frequency.
 	 */
-	public int sample_frequency() { return h_sample_frequency; }
+	int sample_frequency() { return h_sample_frequency; }
 
 	/**
 	 * Returns Frequency.
 	 */
-	public int frequency() {return frequencies[h_version][h_sample_frequency];}
+	int frequency() {return frequencies[h_version][h_sample_frequency];}
 
 	/**
 	 * Returns Mode.
 	 */
-	public int mode() { return h_mode; }
+	int mode() { return h_mode; }
 
 	/**
 	 * Returns Protection bit.
 	 */
-	public boolean checksums()
+	private boolean checksums()
 	{
 		if (h_protection_bit == 0) return true;
 		else return false;
 	}
 
 	/**
-	 * Returns Copyright.
-	 */
-	public boolean copyright() { return h_copyright; }
-
-	/**
-	 * Returns Original.
-	 */
-	public boolean original() { return h_original; }
-
-	/**
-	 * Return VBR.
-	 * @return true if VBR header is found
-	 */
-	public boolean vbr() { return h_vbr; }
-
-	/**
-	 * Return VBR scale.
-	 * @return scale of -1 if not available
-	 */
-	public int vbr_scale() { return h_vbr_scale; }
-
-	/**
-	 * Return VBR TOC.
-	 * @return vbr toc ot null if not available
-	 */
-	public byte[] vbr_toc() { return h_vbr_toc; }
-
-	/**
 	 * Returns Checksum flag.
 	 * Compares computed checksum with stream checksum.
 	 */
-	public boolean checksum_ok () { return (checksum == crc.checksum()); }
-
-	// Seeking and layer III stuff
-	/**
-	 * Returns Layer III Padding bit.
-	 */
-	public boolean padding()
-	{
-		if (h_padding_bit == 0) return false;
-		else return true;
-	}
+	boolean checksum_ok () { return (checksum == crc.checksum()); }
 
 	/**
 	 * Returns Slots.
 	 */
-	public int slots() { return nSlots; }
+	int slots() { return nSlots; }
 
 	/**
 	 * Returns Mode Extension.
 	 */
-	public int mode_extension() { return h_mode_extension; }
+	int mode_extension() { return h_mode_extension; }
 
 	// E.B -> private to public
-	public static final int bitrates[][][] = {
+	private static final int bitrates[][][] = {
 		{{0 /*free format*/, 32000, 48000, 56000, 64000, 80000, 96000,
 			112000, 128000, 144000, 160000, 176000, 192000 ,224000, 256000, 0},
 			{0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000,
@@ -466,7 +430,7 @@ public final class Header
 	 * Calculate Frame size.
 	 * Calculates framesize in bytes excluding header size.
 	 */
-	public int calculate_framesize()
+	private int calculate_framesize()
 	{
 
 		if (h_layer == 1)
@@ -513,7 +477,7 @@ public final class Header
 	 * @param streamsize
 	 * @return number of frames
 	 */
-	public int max_number_of_frames(int streamsize)  // E.B
+/*	private int max_number_of_frames(int streamsize)  // E.B
 	{
 		if (h_vbr == true) return h_vbr_frames;
 		else
@@ -522,21 +486,22 @@ public final class Header
 			else return(streamsize / (framesize + 4 - h_padding_bit));
 		}
 	}
-
-	/**
-	 * Returns the maximum number of frames in the stream.
-	 * @param streamsize
-	 * @return number of frames
-	 */
-	public int min_number_of_frames(int streamsize) // E.B
-	{
-		if (h_vbr == true) return h_vbr_frames;
-		else
-		{
-			if ((framesize + 5 - h_padding_bit) == 0) return 0;
-			else return(streamsize / (framesize + 5 - h_padding_bit));
-		}
-	}
+*/
+// TODO Remove unused code found by UCDetector
+// 	/**
+// 	 * Returns the maximum number of frames in the stream.
+// 	 * @param streamsize
+// 	 * @return number of frames
+// 	 */
+// 	public int min_number_of_frames(int streamsize) // E.B
+// 	{
+// 		if (h_vbr == true) return h_vbr_frames;
+// 		else
+// 		{
+// 			if ((framesize + 5 - h_padding_bit) == 0) return 0;
+// 			else return(streamsize / (framesize + 5 - h_padding_bit));
+// 		}
+// 	}
 
 
 	/**
@@ -566,7 +531,7 @@ public final class Header
 	 * Returns ms/frame.
 	 * @return milliseconds per frame
 	 */
-	public float ms_per_frame() // E.B
+	private float ms_per_frame() // E.B
 	{
 		if (h_vbr == true)
 		{			
@@ -583,29 +548,22 @@ public final class Header
 		}
 	}
 
-	/**
-	 * Returns total ms.
-	 * @param streamsize
-	 * @return total milliseconds
-	 */
-	public float total_ms(int streamsize) // E.B
-	{
-		return(max_number_of_frames(streamsize) * ms_per_frame());
-	}
-
-	/**
-	 * Returns synchronized header.
-	 */
-	public int getSyncHeader() // E.B
-	{
-		return _headerstring;
-	}
+// TODO Remove unused code found by UCDetector
+// 	/**
+// 	 * Returns total ms.
+// 	 * @param streamsize
+// 	 * @return total milliseconds
+// 	 */
+// 	public float total_ms(int streamsize) // E.B
+// 	{
+// 		return(max_number_of_frames(streamsize) * ms_per_frame());
+// 	}
 
 	// functions which return header informations as strings:
 	/**
 	 * Return Layer version.
 	 */
-	public String layer_string()
+	private String layer_string()
 	{
 		switch (h_layer)
 		{
@@ -620,7 +578,7 @@ public final class Header
 	}
 
 	// E.B -> private to public
-	public static final String bitrate_str[][][] = {
+	private static final String bitrate_str[][][] = {
 		{{"free format", "32 kbit/s", "48 kbit/s", "56 kbit/s", "64 kbit/s",
 			"80 kbit/s", "96 kbit/s", "112 kbit/s", "128 kbit/s", "144 kbit/s",
 			"160 kbit/s", "176 kbit/s", "192 kbit/s", "224 kbit/s", "256 kbit/s",
@@ -665,7 +623,7 @@ public final class Header
 	 * Return Bitrate.
 	 * @return bitrate in bps
 	 */
-	public String bitrate_string()
+	private String bitrate_string()
 	{
 		if (h_vbr == true)
 		{
@@ -678,7 +636,7 @@ public final class Header
 	 * Return Bitrate.
 	 * @return bitrate in bps and average bitrate for VBR header
 	 */
-	public int bitrate()
+	private int bitrate()
 	{
 		if (h_vbr == true)
 		{
@@ -688,20 +646,10 @@ public final class Header
 	}
 
 	/**
-	 * Return Instant Bitrate.
-	 * Bitrate for VBR is not constant.
-	 * @return bitrate in bps
-	 */
-	public int bitrate_instant()
-	{
-		return bitrates[h_version][h_layer - 1][h_bitrate_index];
-	}
-
-	/**
 	 * Returns Frequency
 	 * @return frequency string in kHz
 	 */
-	public String sample_frequency_string()
+	private String sample_frequency_string()
 	{
 		switch (h_sample_frequency)
 		{
@@ -733,7 +681,7 @@ public final class Header
 	/**
 	 * Returns Mode.
 	 */
-	public String mode_string()
+	private String mode_string()
 	{
 		switch (h_mode)
 		{
@@ -753,7 +701,7 @@ public final class Header
 	 * Returns Version.
 	 * @return MPEG-1 or MPEG-2 LSF or MPEG-2.5 LSF
 	 */
-	public String version_string()
+	private String version_string()
 	{
 		switch (h_version)
 		{
@@ -771,7 +719,7 @@ public final class Header
 	 * Returns the number of subbands in the current frame.
 	 * @return number of subbands
 	 */
-	public int number_of_subbands() {return h_number_of_subbands;}
+	int number_of_subbands() {return h_number_of_subbands;}
 
 	/**
 	 * Returns Intensity Stereo.
@@ -780,5 +728,5 @@ public final class Header
 	 * subbands above that limit are in intensity stereo mode.
 	 * @return intensity
 	 */
-	public int intensity_stereo_bound() {return h_intensity_stereo_bound;}
+	int intensity_stereo_bound() {return h_intensity_stereo_bound;}
 }

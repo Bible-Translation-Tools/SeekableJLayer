@@ -27,7 +27,7 @@ package javazoom.jl.decoder;
 // REVIEW: the interface currently is too thin. There should be
 // methods to specify the output buffer, the synthesis filters and
 // possibly other objects used by the decoder. 
-public interface FrameDecoder
+interface FrameDecoder
 {
 	/**
 	 * Decodes one frame of MPEG audio. 

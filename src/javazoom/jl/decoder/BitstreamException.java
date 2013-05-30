@@ -37,35 +37,32 @@ package javazoom.jl.decoder;
  * @author MDM	12/12/99
  */
 
+@SuppressWarnings("serial")
 public class BitstreamException extends JavaLayerException
-	implements BitstreamErrors
+implements BitstreamErrors
 {	
-	private int errorcode = UNKNOWN_ERROR;
-	
-	public BitstreamException(String msg, Throwable t)
+	private final int errorcode;
+	BitstreamException(String msg, Throwable t)
 	{
 		super(msg, t);	
+		errorcode = UNKNOWN_ERROR;
 	}
-	
-	public BitstreamException(int errorcode, Throwable t)
+
+	BitstreamException(int errorcode, Throwable t)
 	{
-		this(getErrorString(errorcode), t);
+		super(getErrorString(errorcode), t);
 		this.errorcode = errorcode;
 	}
-	
-	public int getErrorCode()
+
+	int getErrorCode()
 	{
 		return errorcode;	
 	}
-	
-	
-	static public String getErrorString(int errorcode)
+
+	static private String getErrorString(int errorcode)
 	{
 		// REVIEW: use resource bundle to map error codes
 		// to locale-sensitive strings.
-		
 		return "Bitstream errorcode "+Integer.toHexString(errorcode);
-	}
-	
-	
+	}	
 }

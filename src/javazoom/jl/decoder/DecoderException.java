@@ -26,6 +26,7 @@ package javazoom.jl.decoder;
  * 
  * @author MDM
  */
+@SuppressWarnings("serial")
 public class DecoderException extends JavaLayerException
 	implements DecoderErrors
 {	

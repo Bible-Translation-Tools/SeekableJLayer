@@ -31,10 +31,6 @@ package javazoom.jl.decoder;
 public class Decoder implements DecoderErrors
 {
 	static private final Params DEFAULT_PARAMS = new Params();
-	// WVB- why the fuck not 32767 ?
-	// This is truly a constant which means that we don't have to add it to all the compute_pcm routines.
-	// Is it possible to merge this into the equalizer settings ?
-	static private float SCALE_FACTOR = 32700.0f;
 	
 	/**
 	 * The Obuffer instance that will receive the decoded
@@ -61,13 +57,7 @@ public class Decoder implements DecoderErrors
 
 	private int						outputFrequency;
 	private int						outputChannels;
-
-	private Equalizer				equalizer = new Equalizer();
-
-	private Params					params;
-
 	private boolean					initialized;
-
 
 	/**
 	 * Creates a new <code>Decoder</code> instance with default 
@@ -86,44 +76,11 @@ public class Decoder implements DecoderErrors
 	 * @param params	The <code>Params</code> instance that describes
 	 *					the customizable aspects of the decoder.  
 	 */
-	public Decoder(Params params0)
+	private Decoder(Params params0)
 	{
 		if (params0 == null)
 			params0 = DEFAULT_PARAMS;
-
-		params = params0;
-
-		Equalizer eq = params.getInitialEqualizerSettings();
-		if (eq!=null)
-		{
-			equalizer.setFrom(eq);
-		}
 	}
-
-	static public Params getDefaultParams()
-	{
-		return (Params)DEFAULT_PARAMS.clone();
-	}
-
-	/**
-	 * WVB - the equalizer we might need later. But this needless back and forth copying is really annoying,
-	 * so we will need to rewrite this.
-	 */
-	/*public void setEqualizer(Equalizer eq)
-	{
-		if (eq==null)
-			eq = Equalizer.PASS_THRU_EQ;
-
-		equalizer.setFrom(eq);
-
-		float[] factors = equalizer.getBandFactors(SCALE_FACTOR);
-
-		if (filter1!=null)
-			filter1.setEQ(factors);
-
-		if (filter2!=null)
-			filter2.setEQ(factors);			
-	}*/
 
 	/**
 	 * Decodes one frame from an MPEG audio bitstream.
@@ -162,7 +119,7 @@ public class Decoder implements DecoderErrors
 	 * @param the sample rate (in Hz) of the samples written to the
 	 *		output buffer when decoding. 
 	 */
-	public int getOutputFrequency()
+	public int getOutputFrequency() // NO_UCD (unused code)
 	{
 		return outputFrequency;
 	}
@@ -176,40 +133,18 @@ public class Decoder implements DecoderErrors
 	 *		for mono, or 2 for stereo.
 	 *		
 	 */
-	public int getOutputChannels()
+	public int getOutputChannels() // NO_UCD (unused code)
 	{
 		return outputChannels;	
 	}
 
-	/**
-	 * Retrieves the maximum number of samples that will be written to
-	 * the output buffer when one frame is decoded. This can be used to
-	 * help calculate the size of other buffers whose size is based upon 
-	 * the number of samples written to the output buffer. NB: this is
-	 * an upper bound and fewer samples may actually be written, depending
-	 * upon the sample rate and number of channels.
-	 * 
-	 * @return The maximum number of samples that are written to the 
-	 *		output buffer when decoding a single frame of MPEG audio.
-	 */
-	public int getOutputBlockSize()
-	{
-		return Obuffer.OBUFFERSIZE;
-	}
-
-
-	protected DecoderException newDecoderException(int errorcode)
-	{
-		return new DecoderException(errorcode, null);
-	}
-
-	protected DecoderException newDecoderException(int errorcode, Throwable throwable)
+	private DecoderException newDecoderException(int errorcode, Throwable throwable)
 	{
 		return new DecoderException(errorcode, throwable);
 	}
 
 	// TODO - get rid of the decoder assignment before sending a result back.
-	protected FrameDecoder retrieveDecoder(Header header, Bitstream stream, int layer) throws DecoderException
+	private FrameDecoder retrieveDecoder(Header header, Bitstream stream, int layer) throws DecoderException
 	{
 		FrameDecoder decoder = null;
 
@@ -268,12 +203,11 @@ public class Decoder implements DecoderErrors
 		if (output == null)
 			output = new SampleBuffer(header.frequency(), channels);
 		
-		float[] factors = equalizer.getBandFactors(SCALE_FACTOR);
-		filter1 = new SynthesisFilter(0, factors);
+		filter1 = new SynthesisFilter(0);
 
 		// REVIEW: allow mono output for stereo
 		if (channels==2) 
-			filter2 = new SynthesisFilter(1, factors);
+			filter2 = new SynthesisFilter(1);
 
 		outputChannels = channels;
 		outputFrequency = header.frequency();
@@ -287,12 +221,8 @@ public class Decoder implements DecoderErrors
 	 * <p>
 	 * Instances of this class are not thread safe. 
 	 */
-	public static class Params implements Cloneable
+	private static class Params implements Cloneable
 	{
-		private OutputChannels	outputChannels = OutputChannels.BOTH;
-
-		private Equalizer		equalizer = new Equalizer();
-
 		public Params()
 		{			
 		}
@@ -308,44 +238,10 @@ public class Decoder implements DecoderErrors
 				throw new InternalError(this+": "+ex);
 			}
 		}
-
-		public void setOutputChannels(OutputChannels out)
-		{
-			if (out==null)
-				throw new NullPointerException("out");
-
-			outputChannels = out;
-		}
-
-		public OutputChannels getOutputChannels()
-		{
-			return outputChannels;
-		}
-
-		/**
-		 * Retrieves the equalizer settings that the decoder's equalizer
-		 * will be initialized from.
-		 * <p>
-		 * The <code>Equalizer</code> instance returned 
-		 * cannot be changed in real time to affect the 
-		 * decoder output as it is used only to initialize the decoders
-		 * EQ settings. To affect the decoder's output in realtime,
-		 * use the Equalizer returned from the getEqualizer() method on
-		 * the decoder. 
-		 * 
-		 * @return	The <code>Equalizer</code> used to initialize the
-		 *			EQ settings of the decoder. 
-		 */
-		public Equalizer getInitialEqualizerSettings()
-		{
-			return equalizer;	
-		}
-
 	}
 
 	public void seek_notify() 
 	{
-		
 		if (l3decoder!=null) l3decoder.seek_notify();
 		if (l2decoder!=null) l2decoder.seek_notify();
 		if (l1decoder!=null) l1decoder.seek_notify();

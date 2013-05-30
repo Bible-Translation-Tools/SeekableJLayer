@@ -25,7 +25,7 @@
  *----------------------------------------------------------------------
  */ 
 package javazoom.jl.decoder;
-	
+
 /** 
  * Implementation of Bit Reservoir for Layer III.
  * <p>

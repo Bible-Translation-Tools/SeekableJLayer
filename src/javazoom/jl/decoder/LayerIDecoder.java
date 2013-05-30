@@ -33,21 +33,21 @@ class LayerIDecoder implements FrameDecoder
 {
 	protected Bitstream 			stream;
     protected Header 				header;
-    protected SynthesisFilter 		filter1, filter2;
-    protected Obuffer 				buffer;
-    protected int 					which_channels;
+    private SynthesisFilter 		filter1, filter2;
+    private Obuffer 				buffer;
+    private int 					which_channels;
 	protected int					mode;
 	
 	protected int					num_subbands;
 	protected Subband[]				subbands;
-	protected Crc16					crc	= null;	// new Crc16[1] to enable CRC checking.
+	protected final Crc16			crc	= null;	// new Crc16() to enable CRC checking.
 	
 	public LayerIDecoder()
 	{
-		crc = new Crc16();
+//		crc = new Crc16();
 	}
 	
-	public void create(Bitstream stream0, Header header0,
+	public final void create(Bitstream stream0, Header header0,
 		SynthesisFilter filtera, SynthesisFilter filterb,
 		Obuffer buffer0, int which_ch0)
 	{		
@@ -101,7 +101,7 @@ class LayerIDecoder implements FrameDecoder
   	    }		
 	}
 	
-	protected void readAllocation() throws DecoderException, BitstreamException
+	private final void readAllocation() throws DecoderException, BitstreamException
 	{
 		// start to read audio data:
   	    for (int i = 0; i < num_subbands; ++i)
@@ -114,13 +114,13 @@ class LayerIDecoder implements FrameDecoder
 		// scale factor selection not present for layer I. 
 	}
 	
-	protected void readScaleFactors() throws BitstreamException
+	private final void readScaleFactors() throws BitstreamException
 	{
 		for (int i = 0; i < num_subbands; ++i)
   		  subbands[i].read_scalefactor(stream, header);  		
 	}
 	
-	protected void readSampleData() throws BitstreamException
+	private final void readSampleData() throws BitstreamException
 	{
 		boolean read_ready = false;
 		boolean write_ready = false;
@@ -290,14 +290,14 @@ class LayerIDecoder implements FrameDecoder
 	/**
 	 * Class for layer I subbands in joint stereo mode.
 	 */
-	static class SubbandLayer1IntensityStereo extends SubbandLayer1
+	private static class SubbandLayer1IntensityStereo extends SubbandLayer1
 	{
-	  protected float 		channel2_scalefactor;
+	  private float channel2_scalefactor;
 
 	  /**
 	   * Constructor
 	   */
-	  public SubbandLayer1IntensityStereo(int subbandnumber)
+	  private SubbandLayer1IntensityStereo(int subbandnumber)
 	  {
 		super(subbandnumber);  
 	  }
@@ -366,19 +366,18 @@ class LayerIDecoder implements FrameDecoder
 	/**
 	 * Class for layer I subbands in stereo mode.
 	 */
-	static class SubbandLayer1Stereo extends SubbandLayer1
+	private static class SubbandLayer1Stereo extends SubbandLayer1
 	{
-	  protected int 		channel2_allocation;
-	  protected float		channel2_scalefactor;
-	  protected int 		channel2_samplelength;
-	  protected float	 	channel2_sample;
-	  protected float 	 	channel2_factor, channel2_offset;
-
+	  private int 	channel2_allocation;
+	  private float	channel2_scalefactor;
+	  private int 	channel2_samplelength;
+	  private float	channel2_sample;
+	  private float channel2_factor, channel2_offset;
 
 	  /**
 	   * Constructor
 	   */
-	  public SubbandLayer1Stereo(int subbandnumber)
+	  private SubbandLayer1Stereo(int subbandnumber)
 	  {
 	    super(subbandnumber);
 	  }
