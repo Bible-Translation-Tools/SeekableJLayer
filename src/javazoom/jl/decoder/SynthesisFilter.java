@@ -446,27 +446,25 @@ final class SynthesisFilter
 		for( int i=0; i<32; i++)
 		{
 			float pcm_sample;
-			final float[] dp = d16[i];
-			pcm_sample = (float)(((vp[0 + dvp] * dp[0]) +
-					(vp[15 + dvp] * dp[1]) +
-					(vp[14 + dvp] * dp[2]) +
-					(vp[13 + dvp] * dp[3]) +
-					(vp[12 + dvp] * dp[4]) +
-					(vp[11 + dvp] * dp[5]) +
-					(vp[10 + dvp] * dp[6]) +
-					(vp[9 + dvp] * dp[7]) +
-					(vp[8 + dvp] * dp[8]) +
-					(vp[7 + dvp] * dp[9]) +
-					(vp[6 + dvp] * dp[10]) +
-					(vp[5 + dvp] * dp[11]) +
-					(vp[4 + dvp] * dp[12]) +
-					(vp[3 + dvp] * dp[13]) +
-					(vp[2 + dvp] * dp[14]) +
-					(vp[1 + dvp] * dp[15])
+			final D16 dp = d16[i];
+			pcm_sample = (float)(((vp[0 + dvp] * dp.d0) +
+					(vp[15 + dvp] * dp.d1) +
+					(vp[14 + dvp] * dp.d2) +
+					(vp[13 + dvp] * dp.d3) +
+					(vp[12 + dvp] * dp.d4) +
+					(vp[11 + dvp] * dp.d5) +
+					(vp[10 + dvp] * dp.d6) +
+					(vp[9 + dvp] * dp.d7) +
+					(vp[8 + dvp] * dp.d8) +
+					(vp[7 + dvp] * dp.d9) +
+					(vp[6 + dvp] * dp.d10) +
+					(vp[5 + dvp] * dp.d11) +
+					(vp[4 + dvp] * dp.d12) +
+					(vp[3 + dvp] * dp.d13) +
+					(vp[2 + dvp] * dp.d14) +
+					(vp[1 + dvp] * dp.d15)
 					) );
-
 			tmpOut[i] = pcm_sample;
-
 			dvp += 16;
 		} // for
 	}
@@ -480,25 +478,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (((vp[1 + dvp] * dp[0]) +
-					(vp[0 + dvp] * dp[1]) +
-					(vp[15 + dvp] * dp[2]) +
-					(vp[14 + dvp] * dp[3]) +
-					(vp[13 + dvp] * dp[4]) +
-					(vp[12 + dvp] * dp[5]) +
-					(vp[11 + dvp] * dp[6]) +
-					(vp[10 + dvp] * dp[7]) +
-					(vp[9 + dvp] * dp[8]) +
-					(vp[8 + dvp] * dp[9]) +
-					(vp[7 + dvp] * dp[10]) +
-					(vp[6 + dvp] * dp[11]) +
-					(vp[5 + dvp] * dp[12]) +
-					(vp[4 + dvp] * dp[13]) +
-					(vp[3 + dvp] * dp[14]) +
-					(vp[2 + dvp] * dp[15])
+			pcm_sample = (((vp[1 + dvp] * dp.d0) +
+					(vp[0 + dvp] * dp.d1) +
+					(vp[15 + dvp] * dp.d2) +
+					(vp[14 + dvp] * dp.d3) +
+					(vp[13 + dvp] * dp.d4) +
+					(vp[12 + dvp] * dp.d5) +
+					(vp[11 + dvp] * dp.d6) +
+					(vp[10 + dvp] * dp.d7) +
+					(vp[9 + dvp] * dp.d8) +
+					(vp[8 + dvp] * dp.d9) +
+					(vp[7 + dvp] * dp.d10) +
+					(vp[6 + dvp] * dp.d11) +
+					(vp[5 + dvp] * dp.d12) +
+					(vp[4 + dvp] * dp.d13) +
+					(vp[3 + dvp] * dp.d14) +
+					(vp[2 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -517,25 +515,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[2 + dvp] * dp[0]) +
-					(vp[1 + dvp] * dp[1]) +
-					(vp[0 + dvp] * dp[2]) +
-					(vp[15 + dvp] * dp[3]) +
-					(vp[14 + dvp] * dp[4]) +
-					(vp[13 + dvp] * dp[5]) +
-					(vp[12 + dvp] * dp[6]) +
-					(vp[11 + dvp] * dp[7]) +
-					(vp[10 + dvp] * dp[8]) +
-					(vp[9 + dvp] * dp[9]) +
-					(vp[8 + dvp] * dp[10]) +
-					(vp[7 + dvp] * dp[11]) +
-					(vp[6 + dvp] * dp[12]) +
-					(vp[5 + dvp] * dp[13]) +
-					(vp[4 + dvp] * dp[14]) +
-					(vp[3 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[2 + dvp] * dp.d0) +
+					(vp[1 + dvp] * dp.d1) +
+					(vp[0 + dvp] * dp.d2) +
+					(vp[15 + dvp] * dp.d3) +
+					(vp[14 + dvp] * dp.d4) +
+					(vp[13 + dvp] * dp.d5) +
+					(vp[12 + dvp] * dp.d6) +
+					(vp[11 + dvp] * dp.d7) +
+					(vp[10 + dvp] * dp.d8) +
+					(vp[9 + dvp] * dp.d9) +
+					(vp[8 + dvp] * dp.d10) +
+					(vp[7 + dvp] * dp.d11) +
+					(vp[6 + dvp] * dp.d12) +
+					(vp[5 + dvp] * dp.d13) +
+					(vp[4 + dvp] * dp.d14) +
+					(vp[3 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -554,25 +552,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[3 + dvp] * dp[0]) +
-					(vp[2 + dvp] * dp[1]) +
-					(vp[1 + dvp] * dp[2]) +
-					(vp[0 + dvp] * dp[3]) +
-					(vp[15 + dvp] * dp[4]) +
-					(vp[14 + dvp] * dp[5]) +
-					(vp[13 + dvp] * dp[6]) +
-					(vp[12 + dvp] * dp[7]) +
-					(vp[11 + dvp] * dp[8]) +
-					(vp[10 + dvp] * dp[9]) +
-					(vp[9 + dvp] * dp[10]) +
-					(vp[8 + dvp] * dp[11]) +
-					(vp[7 + dvp] * dp[12]) +
-					(vp[6 + dvp] * dp[13]) +
-					(vp[5 + dvp] * dp[14]) +
-					(vp[4 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[3 + dvp] * dp.d0) +
+					(vp[2 + dvp] * dp.d1) +
+					(vp[1 + dvp] * dp.d2) +
+					(vp[0 + dvp] * dp.d3) +
+					(vp[15 + dvp] * dp.d4) +
+					(vp[14 + dvp] * dp.d5) +
+					(vp[13 + dvp] * dp.d6) +
+					(vp[12 + dvp] * dp.d7) +
+					(vp[11 + dvp] * dp.d8) +
+					(vp[10 + dvp] * dp.d9) +
+					(vp[9 + dvp] * dp.d10) +
+					(vp[8 + dvp] * dp.d11) +
+					(vp[7 + dvp] * dp.d12) +
+					(vp[6 + dvp] * dp.d13) +
+					(vp[5 + dvp] * dp.d14) +
+					(vp[4 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -591,25 +589,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[4 + dvp] * dp[0]) +
-					(vp[3 + dvp] * dp[1]) +
-					(vp[2 + dvp] * dp[2]) +
-					(vp[1 + dvp] * dp[3]) +
-					(vp[0 + dvp] * dp[4]) +
-					(vp[15 + dvp] * dp[5]) +
-					(vp[14 + dvp] * dp[6]) +
-					(vp[13 + dvp] * dp[7]) +
-					(vp[12 + dvp] * dp[8]) +
-					(vp[11 + dvp] * dp[9]) +
-					(vp[10 + dvp] * dp[10]) +
-					(vp[9 + dvp] * dp[11]) +
-					(vp[8 + dvp] * dp[12]) +
-					(vp[7 + dvp] * dp[13]) +
-					(vp[6 + dvp] * dp[14]) +
-					(vp[5 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[4 + dvp] * dp.d0) +
+					(vp[3 + dvp] * dp.d1) +
+					(vp[2 + dvp] * dp.d2) +
+					(vp[1 + dvp] * dp.d3) +
+					(vp[0 + dvp] * dp.d4) +
+					(vp[15 + dvp] * dp.d5) +
+					(vp[14 + dvp] * dp.d6) +
+					(vp[13 + dvp] * dp.d7) +
+					(vp[12 + dvp] * dp.d8) +
+					(vp[11 + dvp] * dp.d9) +
+					(vp[10 + dvp] * dp.d10) +
+					(vp[9 + dvp] * dp.d11) +
+					(vp[8 + dvp] * dp.d12) +
+					(vp[7 + dvp] * dp.d13) +
+					(vp[6 + dvp] * dp.d14) +
+					(vp[5 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -628,25 +626,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[5 + dvp] * dp[0]) +
-					(vp[4 + dvp] * dp[1]) +
-					(vp[3 + dvp] * dp[2]) +
-					(vp[2 + dvp] * dp[3]) +
-					(vp[1 + dvp] * dp[4]) +
-					(vp[0 + dvp] * dp[5]) +
-					(vp[15 + dvp] * dp[6]) +
-					(vp[14 + dvp] * dp[7]) +
-					(vp[13 + dvp] * dp[8]) +
-					(vp[12 + dvp] * dp[9]) +
-					(vp[11 + dvp] * dp[10]) +
-					(vp[10 + dvp] * dp[11]) +
-					(vp[9 + dvp] * dp[12]) +
-					(vp[8 + dvp] * dp[13]) +
-					(vp[7 + dvp] * dp[14]) +
-					(vp[6 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[5 + dvp] * dp.d0) +
+					(vp[4 + dvp] * dp.d1) +
+					(vp[3 + dvp] * dp.d2) +
+					(vp[2 + dvp] * dp.d3) +
+					(vp[1 + dvp] * dp.d4) +
+					(vp[0 + dvp] * dp.d5) +
+					(vp[15 + dvp] * dp.d6) +
+					(vp[14 + dvp] * dp.d7) +
+					(vp[13 + dvp] * dp.d8) +
+					(vp[12 + dvp] * dp.d9) +
+					(vp[11 + dvp] * dp.d10) +
+					(vp[10 + dvp] * dp.d11) +
+					(vp[9 + dvp] * dp.d12) +
+					(vp[8 + dvp] * dp.d13) +
+					(vp[7 + dvp] * dp.d14) +
+					(vp[6 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -664,25 +662,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[6 + dvp] * dp[0]) +
-					(vp[5 + dvp] * dp[1]) +
-					(vp[4 + dvp] * dp[2]) +
-					(vp[3 + dvp] * dp[3]) +
-					(vp[2 + dvp] * dp[4]) +
-					(vp[1 + dvp] * dp[5]) +
-					(vp[0 + dvp] * dp[6]) +
-					(vp[15 + dvp] * dp[7]) +
-					(vp[14 + dvp] * dp[8]) +
-					(vp[13 + dvp] * dp[9]) +
-					(vp[12 + dvp] * dp[10]) +
-					(vp[11 + dvp] * dp[11]) +
-					(vp[10 + dvp] * dp[12]) +
-					(vp[9 + dvp] * dp[13]) +
-					(vp[8 + dvp] * dp[14]) +
-					(vp[7 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[6 + dvp] * dp.d0) +
+					(vp[5 + dvp] * dp.d1) +
+					(vp[4 + dvp] * dp.d2) +
+					(vp[3 + dvp] * dp.d3) +
+					(vp[2 + dvp] * dp.d4) +
+					(vp[1 + dvp] * dp.d5) +
+					(vp[0 + dvp] * dp.d6) +
+					(vp[15 + dvp] * dp.d7) +
+					(vp[14 + dvp] * dp.d8) +
+					(vp[13 + dvp] * dp.d9) +
+					(vp[12 + dvp] * dp.d10) +
+					(vp[11 + dvp] * dp.d11) +
+					(vp[10 + dvp] * dp.d12) +
+					(vp[9 + dvp] * dp.d13) +
+					(vp[8 + dvp] * dp.d14) +
+					(vp[7 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -701,25 +699,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[7 + dvp] * dp[0]) +
-					(vp[6 + dvp] * dp[1]) +
-					(vp[5 + dvp] * dp[2]) +
-					(vp[4 + dvp] * dp[3]) +
-					(vp[3 + dvp] * dp[4]) +
-					(vp[2 + dvp] * dp[5]) +
-					(vp[1 + dvp] * dp[6]) +
-					(vp[0 + dvp] * dp[7]) +
-					(vp[15 + dvp] * dp[8]) +
-					(vp[14 + dvp] * dp[9]) +
-					(vp[13 + dvp] * dp[10]) +
-					(vp[12 + dvp] * dp[11]) +
-					(vp[11 + dvp] * dp[12]) +
-					(vp[10 + dvp] * dp[13]) +
-					(vp[9 + dvp] * dp[14]) +
-					(vp[8 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[7 + dvp] * dp.d0) +
+					(vp[6 + dvp] * dp.d1) +
+					(vp[5 + dvp] * dp.d2) +
+					(vp[4 + dvp] * dp.d3) +
+					(vp[3 + dvp] * dp.d4) +
+					(vp[2 + dvp] * dp.d5) +
+					(vp[1 + dvp] * dp.d6) +
+					(vp[0 + dvp] * dp.d7) +
+					(vp[15 + dvp] * dp.d8) +
+					(vp[14 + dvp] * dp.d9) +
+					(vp[13 + dvp] * dp.d10) +
+					(vp[12 + dvp] * dp.d11) +
+					(vp[11 + dvp] * dp.d12) +
+					(vp[10 + dvp] * dp.d13) +
+					(vp[9 + dvp] * dp.d14) +
+					(vp[8 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -738,25 +736,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[8 + dvp] * dp[0]) +
-					(vp[7 + dvp] * dp[1]) +
-					(vp[6 + dvp] * dp[2]) +
-					(vp[5 + dvp] * dp[3]) +
-					(vp[4 + dvp] * dp[4]) +
-					(vp[3 + dvp] * dp[5]) +
-					(vp[2 + dvp] * dp[6]) +
-					(vp[1 + dvp] * dp[7]) +
-					(vp[0 + dvp] * dp[8]) +
-					(vp[15 + dvp] * dp[9]) +
-					(vp[14 + dvp] * dp[10]) +
-					(vp[13 + dvp] * dp[11]) +
-					(vp[12 + dvp] * dp[12]) +
-					(vp[11 + dvp] * dp[13]) +
-					(vp[10 + dvp] * dp[14]) +
-					(vp[9 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[8 + dvp] * dp.d0) +
+					(vp[7 + dvp] * dp.d1) +
+					(vp[6 + dvp] * dp.d2) +
+					(vp[5 + dvp] * dp.d3) +
+					(vp[4 + dvp] * dp.d4) +
+					(vp[3 + dvp] * dp.d5) +
+					(vp[2 + dvp] * dp.d6) +
+					(vp[1 + dvp] * dp.d7) +
+					(vp[0 + dvp] * dp.d8) +
+					(vp[15 + dvp] * dp.d9) +
+					(vp[14 + dvp] * dp.d10) +
+					(vp[13 + dvp] * dp.d11) +
+					(vp[12 + dvp] * dp.d12) +
+					(vp[11 + dvp] * dp.d13) +
+					(vp[10 + dvp] * dp.d14) +
+					(vp[9 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -775,25 +773,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[9 + dvp] * dp[0]) +
-					(vp[8 + dvp] * dp[1]) +
-					(vp[7 + dvp] * dp[2]) +
-					(vp[6 + dvp] * dp[3]) +
-					(vp[5 + dvp] * dp[4]) +
-					(vp[4 + dvp] * dp[5]) +
-					(vp[3 + dvp] * dp[6]) +
-					(vp[2 + dvp] * dp[7]) +
-					(vp[1 + dvp] * dp[8]) +
-					(vp[0 + dvp] * dp[9]) +
-					(vp[15 + dvp] * dp[10]) +
-					(vp[14 + dvp] * dp[11]) +
-					(vp[13 + dvp] * dp[12]) +
-					(vp[12 + dvp] * dp[13]) +
-					(vp[11 + dvp] * dp[14]) +
-					(vp[10 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[9 + dvp] * dp.d0) +
+					(vp[8 + dvp] * dp.d1) +
+					(vp[7 + dvp] * dp.d2) +
+					(vp[6 + dvp] * dp.d3) +
+					(vp[5 + dvp] * dp.d4) +
+					(vp[4 + dvp] * dp.d5) +
+					(vp[3 + dvp] * dp.d6) +
+					(vp[2 + dvp] * dp.d7) +
+					(vp[1 + dvp] * dp.d8) +
+					(vp[0 + dvp] * dp.d9) +
+					(vp[15 + dvp] * dp.d10) +
+					(vp[14 + dvp] * dp.d11) +
+					(vp[13 + dvp] * dp.d12) +
+					(vp[12 + dvp] * dp.d13) +
+					(vp[11 + dvp] * dp.d14) +
+					(vp[10 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -811,25 +809,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[10 + dvp] * dp[0]) +
-					(vp[9 + dvp] * dp[1]) +
-					(vp[8 + dvp] * dp[2]) +
-					(vp[7 + dvp] * dp[3]) +
-					(vp[6 + dvp] * dp[4]) +
-					(vp[5 + dvp] * dp[5]) +
-					(vp[4 + dvp] * dp[6]) +
-					(vp[3 + dvp] * dp[7]) +
-					(vp[2 + dvp] * dp[8]) +
-					(vp[1 + dvp] * dp[9]) +
-					(vp[0 + dvp] * dp[10]) +
-					(vp[15 + dvp] * dp[11]) +
-					(vp[14 + dvp] * dp[12]) +
-					(vp[13 + dvp] * dp[13]) +
-					(vp[12 + dvp] * dp[14]) +
-					(vp[11 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[10 + dvp] * dp.d0) +
+					(vp[9 + dvp] * dp.d1) +
+					(vp[8 + dvp] * dp.d2) +
+					(vp[7 + dvp] * dp.d3) +
+					(vp[6 + dvp] * dp.d4) +
+					(vp[5 + dvp] * dp.d5) +
+					(vp[4 + dvp] * dp.d6) +
+					(vp[3 + dvp] * dp.d7) +
+					(vp[2 + dvp] * dp.d8) +
+					(vp[1 + dvp] * dp.d9) +
+					(vp[0 + dvp] * dp.d10) +
+					(vp[15 + dvp] * dp.d11) +
+					(vp[14 + dvp] * dp.d12) +
+					(vp[13 + dvp] * dp.d13) +
+					(vp[12 + dvp] * dp.d14) +
+					(vp[11 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -848,25 +846,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[11 + dvp] * dp[0]) +
-					(vp[10 + dvp] * dp[1]) +
-					(vp[9 + dvp] * dp[2]) +
-					(vp[8 + dvp] * dp[3]) +
-					(vp[7 + dvp] * dp[4]) +
-					(vp[6 + dvp] * dp[5]) +
-					(vp[5 + dvp] * dp[6]) +
-					(vp[4 + dvp] * dp[7]) +
-					(vp[3 + dvp] * dp[8]) +
-					(vp[2 + dvp] * dp[9]) +
-					(vp[1 + dvp] * dp[10]) +
-					(vp[0 + dvp] * dp[11]) +
-					(vp[15 + dvp] * dp[12]) +
-					(vp[14 + dvp] * dp[13]) +
-					(vp[13 + dvp] * dp[14]) +
-					(vp[12 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[11 + dvp] * dp.d0) +
+					(vp[10 + dvp] * dp.d1) +
+					(vp[9 + dvp] * dp.d2) +
+					(vp[8 + dvp] * dp.d3) +
+					(vp[7 + dvp] * dp.d4) +
+					(vp[6 + dvp] * dp.d5) +
+					(vp[5 + dvp] * dp.d6) +
+					(vp[4 + dvp] * dp.d7) +
+					(vp[3 + dvp] * dp.d8) +
+					(vp[2 + dvp] * dp.d9) +
+					(vp[1 + dvp] * dp.d10) +
+					(vp[0 + dvp] * dp.d11) +
+					(vp[15 + dvp] * dp.d12) +
+					(vp[14 + dvp] * dp.d13) +
+					(vp[13 + dvp] * dp.d14) +
+					(vp[12 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -884,25 +882,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[12 + dvp] * dp[0]) +
-					(vp[11 + dvp] * dp[1]) +
-					(vp[10 + dvp] * dp[2]) +
-					(vp[9 + dvp] * dp[3]) +
-					(vp[8 + dvp] * dp[4]) +
-					(vp[7 + dvp] * dp[5]) +
-					(vp[6 + dvp] * dp[6]) +
-					(vp[5 + dvp] * dp[7]) +
-					(vp[4 + dvp] * dp[8]) +
-					(vp[3 + dvp] * dp[9]) +
-					(vp[2 + dvp] * dp[10]) +
-					(vp[1 + dvp] * dp[11]) +
-					(vp[0 + dvp] * dp[12]) +
-					(vp[15 + dvp] * dp[13]) +
-					(vp[14 + dvp] * dp[14]) +
-					(vp[13 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[12 + dvp] * dp.d0) +
+					(vp[11 + dvp] * dp.d1) +
+					(vp[10 + dvp] * dp.d2) +
+					(vp[9 + dvp] * dp.d3) +
+					(vp[8 + dvp] * dp.d4) +
+					(vp[7 + dvp] * dp.d5) +
+					(vp[6 + dvp] * dp.d6) +
+					(vp[5 + dvp] * dp.d7) +
+					(vp[4 + dvp] * dp.d8) +
+					(vp[3 + dvp] * dp.d9) +
+					(vp[2 + dvp] * dp.d10) +
+					(vp[1 + dvp] * dp.d11) +
+					(vp[0 + dvp] * dp.d12) +
+					(vp[15 + dvp] * dp.d13) +
+					(vp[14 + dvp] * dp.d14) +
+					(vp[13 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -921,25 +919,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[13 + dvp] * dp[0]) +
-					(vp[12 + dvp] * dp[1]) +
-					(vp[11 + dvp] * dp[2]) +
-					(vp[10 + dvp] * dp[3]) +
-					(vp[9 + dvp] * dp[4]) +
-					(vp[8 + dvp] * dp[5]) +
-					(vp[7 + dvp] * dp[6]) +
-					(vp[6 + dvp] * dp[7]) +
-					(vp[5 + dvp] * dp[8]) +
-					(vp[4 + dvp] * dp[9]) +
-					(vp[3 + dvp] * dp[10]) +
-					(vp[2 + dvp] * dp[11]) +
-					(vp[1 + dvp] * dp[12]) +
-					(vp[0 + dvp] * dp[13]) +
-					(vp[15 + dvp] * dp[14]) +
-					(vp[14 + dvp] * dp[15])
+			pcm_sample = (float)(((vp[13 + dvp] * dp.d0) +
+					(vp[12 + dvp] * dp.d1) +
+					(vp[11 + dvp] * dp.d2) +
+					(vp[10 + dvp] * dp.d3) +
+					(vp[9 + dvp] * dp.d4) +
+					(vp[8 + dvp] * dp.d5) +
+					(vp[7 + dvp] * dp.d6) +
+					(vp[6 + dvp] * dp.d7) +
+					(vp[5 + dvp] * dp.d8) +
+					(vp[4 + dvp] * dp.d9) +
+					(vp[3 + dvp] * dp.d10) +
+					(vp[2 + dvp] * dp.d11) +
+					(vp[1 + dvp] * dp.d12) +
+					(vp[0 + dvp] * dp.d13) +
+					(vp[15 + dvp] * dp.d14) +
+					(vp[14 + dvp] * dp.d15)
 					) );
 
 			tmpOut[i] = pcm_sample;
@@ -958,25 +956,25 @@ final class SynthesisFilter
 		// fat chance of having this loop unroll
 		for( int i=0; i<32; i++)
 		{
-			final float[] dp = d16[i];
+			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (vp[14 + dvp] * dp[0]) +
-					(vp[13 + dvp] * dp[1]) +
-					(vp[12 + dvp] * dp[2]) +
-					(vp[11 + dvp] * dp[3]) +
-					(vp[10 + dvp] * dp[4]) +
-					(vp[9 + dvp] * dp[5]) +
-					(vp[8 + dvp] * dp[6]) +
-					(vp[7 + dvp] * dp[7]) +
-					(vp[6 + dvp] * dp[8]) +
-					(vp[5 + dvp] * dp[9]) +
-					(vp[4 + dvp] * dp[10]) +
-					(vp[3 + dvp] * dp[11]) +
-					(vp[2 + dvp] * dp[12]) +
-					(vp[1 + dvp] * dp[13]) +
-					(vp[0 + dvp] * dp[14]) +
-					(vp[15 + dvp] * dp[15]);
+			pcm_sample = (vp[14 + dvp] * dp.d0) +
+					(vp[13 + dvp] * dp.d1) +
+					(vp[12 + dvp] * dp.d2) +
+					(vp[11 + dvp] * dp.d3) +
+					(vp[10 + dvp] * dp.d4) +
+					(vp[9 + dvp] * dp.d5) +
+					(vp[8 + dvp] * dp.d6) +
+					(vp[7 + dvp] * dp.d7) +
+					(vp[6 + dvp] * dp.d8) +
+					(vp[5 + dvp] * dp.d9) +
+					(vp[4 + dvp] * dp.d10) +
+					(vp[3 + dvp] * dp.d11) +
+					(vp[2 + dvp] * dp.d12) +
+					(vp[1 + dvp] * dp.d13) +
+					(vp[0 + dvp] * dp.d14) +
+					(vp[15 + dvp] * dp.d15);
 
 			tmpOut[i] = pcm_sample;
 
@@ -991,23 +989,23 @@ final class SynthesisFilter
 		for( int i=0; i<32; i++)
 		{
 			float pcm_sample;
-			final float dp[] = d16[i];
-			pcm_sample = (vp[15 + dvp] * dp[0]) +
-					(vp[14 + dvp] * dp[1]) +
-					(vp[13 + dvp] * dp[2]) +
-					(vp[12 + dvp] * dp[3]) +
-					(vp[11 + dvp] * dp[4]) +
-					(vp[10 + dvp] * dp[5]) +
-					(vp[9 + dvp] * dp[6]) +
-					(vp[8 + dvp] * dp[7]) +
-					(vp[7 + dvp] * dp[8]) +
-					(vp[6 + dvp] * dp[9]) +
-					(vp[5 + dvp] * dp[10]) +
-					(vp[4 + dvp] * dp[11]) +
-					(vp[3 + dvp] * dp[12]) +
-					(vp[2 + dvp] * dp[13]) +
-					(vp[1 + dvp] * dp[14]) +
-					(vp[0 + dvp] * dp[15]);
+			final D16 dp = d16[i];
+			pcm_sample = (vp[15 + dvp] * dp.d0) +
+					(vp[14 + dvp] * dp.d1) +
+					(vp[13 + dvp] * dp.d2) +
+					(vp[12 + dvp] * dp.d3) +
+					(vp[11 + dvp] * dp.d4) +
+					(vp[10 + dvp] * dp.d5) +
+					(vp[9 + dvp] * dp.d6) +
+					(vp[8 + dvp] * dp.d7) +
+					(vp[7 + dvp] * dp.d8) +
+					(vp[6 + dvp] * dp.d9) +
+					(vp[5 + dvp] * dp.d10) +
+					(vp[4 + dvp] * dp.d11) +
+					(vp[3 + dvp] * dp.d12) +
+					(vp[2 + dvp] * dp.d13) +
+					(vp[1 + dvp] * dp.d14) +
+					(vp[0 + dvp] * dp.d15);
 
 			tmpOut[i] = pcm_sample;			
 			dvp += 16;
@@ -1130,7 +1128,6 @@ final class SynthesisFilter
 	// Note: These values are not in the same order
 	// as in Annex 3-B.3 of the ISO/IEC DIS 11172-3 
 	// private float d[] = {0.000000000, -4.000442505};
-
 	private static float d[] = null;
 
 	/** 
@@ -1138,7 +1135,46 @@ final class SynthesisFilter
 	 * more faster access by allowing a block of 16 to be addressed
 	 * with constant offset. 
 	 **/
-	private static float d16[][] = null;
+	static private final class D16
+	{
+		final float d0;
+		final float d1;
+		final float d2;
+		final float d3;
+		final float d4;
+		final float d5;
+		final float d6;
+		final float d7;
+		final float d8;
+		final float d9;
+		final float d10;
+		final float d11;
+		final float d12;
+		final float d13;
+		final float d14;
+		final float d15;
+		D16(float[] d)
+		{
+			d0=d[0];
+			d1=d[1];
+			d2=d[2];
+			d3=d[3];
+			d4=d[4];
+			d5=d[5];
+			d6=d[6];
+			d7=d[7];
+			d8=d[8];
+			d9=d[9];
+			d10=d[10];
+			d11=d[11];
+			d12=d[12];
+			d13=d[13];
+			d14=d[14];
+			d15=d[15];
+		}
+	}
+	
+	private static D16 d16[] = null;
 
 	/**
 	 * Loads the data for the d[] from the resource SFd.ser. 
@@ -1172,14 +1208,12 @@ final class SynthesisFilter
 	 * @return	An array of arrays in which each element in the returned
 	 *			array will be of length <code>blockSize</code>.
 	 */
-	static private float[][] splitArray(final float[] array, final int blockSize)
+	static private D16[] splitArray(final float[] array, final int blockSize)
 	{
 		int size = array.length / blockSize;
-		float[][] split = new float[size][];
+		D16[] split = new D16[size];
 		for (int i=0; i<size; i++)
-		{
 			split[i] = subArray(array, i*blockSize, blockSize);
-		}
 		return split;
 	}
 
@@ -1192,27 +1226,22 @@ final class SynthesisFilter
 	 * @param len	The number of indeces in the subarray.
 	 * @return The subarray, which may be of length 0.
 	 */
-	static private float[] subArray(final float[] array, final int offs, int len)
+	static private D16 subArray(final float[] array, final int offs, int len)
 	{
 		if (offs+len > array.length)
-		{
 			len = array.length-offs;
-		}
-
-		if (len < 0)
+		if (len < 0) 
 			len = 0;
 
 		float[] subarray = new float[len];
 		for (int i=0; i<len; i++)
-		{
 			subarray[i] = array[offs+i];
-		}
-
-		return subarray;
+		return new D16(subarray);
 	}
 
 	// The original data for d[]. This data is loaded from a file
 	// to reduce the overall package size and to improve performance. 
+	// WTF ? 
 	/*  
   static final float d_data[] = {
   	0.000000000f, -0.000442505f,  0.003250122f, -0.007003784f,
