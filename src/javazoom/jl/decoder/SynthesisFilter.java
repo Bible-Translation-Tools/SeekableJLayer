@@ -52,12 +52,12 @@ import java.io.IOException;
  */
 final class SynthesisFilter
 {
-	private final float[] 	 v1;
-	private final float[]	 v2;
-	private float[]			 actual_v;					// v1 or v2
-	private int 			 actual_write_pos;	   		// 0-15
-	final float[]			 samples  = new float[32];	// 32 new input subband samples
-	private final int		 channel;
+	private final float[] v1;
+	private final float[] v2;
+	private float[]		  actual_v;					// v1 or v2
+	private int 		  actual_write_pos;	   		// 0-15
+	final float[]		  samples  = new float[32];	// 32 new input subband samples
+	private final int	  channel;
 
 	public SynthesisFilter(int channelnumber)
 	{  	 
@@ -1138,7 +1138,7 @@ final class SynthesisFilter
 	 * more faster access by allowing a block of 16 to be addressed
 	 * with constant offset. 
 	 **/
-	private static float d16[][] = null;	
+	private static float d16[][] = null;
 
 	/**
 	 * Loads the data for the d[] from the resource SFd.ser. 

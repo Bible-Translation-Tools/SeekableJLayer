@@ -83,7 +83,7 @@ final class LayerIIIDecoder implements FrameDecoder
 			SynthesisFilter filtera, SynthesisFilter filterb,
 			Obuffer buffer0, int which_ch0)
 	{
-		huffcodetab.inithuff();
+		HuffcodeTable.inithuff();
 		is_1d = new int[SBLIMIT*SSLIMIT+4];
 		ro = new float[2][SBLIMIT][SSLIMIT];
 		lr = new float[2][SBLIMIT][SSLIMIT];
@@ -704,7 +704,7 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 	}
 
-	private final huffcodetab.Xyvw xyvw = new huffcodetab.Xyvw(); 
+	private final HuffcodeTable.Xyvw xyvw = new HuffcodeTable.Xyvw(); 
 	private void huffman_decode(int ch, int gr)
 	{
 		xyvw.x = 0;
@@ -720,7 +720,7 @@ final class LayerIIIDecoder implements FrameDecoder
 
 		int buf, buf1;
 
-		huffcodetab h;
+		HuffcodeTable h;
 
 		// Find region boundary for short block case
 
@@ -747,11 +747,11 @@ final class LayerIIIDecoder implements FrameDecoder
 		// Read bigvalues area
 		for (int i=0; i<(si.ch[ch].gr[gr].big_values<<1); i+=2)
 		{
-			if      (i<region1Start) h = huffcodetab.ht[si.ch[ch].gr[gr].table_select[0]];
-			else if (i<region2Start) h = huffcodetab.ht[si.ch[ch].gr[gr].table_select[1]];
-			else                     h = huffcodetab.ht[si.ch[ch].gr[gr].table_select[2]];
+			if      (i<region1Start) h = HuffcodeTable.HT[si.ch[ch].gr[gr].table_select[0]];
+			else if (i<region2Start) h = HuffcodeTable.HT[si.ch[ch].gr[gr].table_select[1]];
+			else                     h = HuffcodeTable.HT[si.ch[ch].gr[gr].table_select[2]];
 
-			huffcodetab.huffman_decoder(h, xyvw, br);
+			HuffcodeTable.huffman_decoder(h, xyvw, br);
 
 			is_1d[index++] = xyvw.x;
 			is_1d[index++] = xyvw.y;
@@ -759,12 +759,12 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 
 		// Read count1 area
-		h = huffcodetab.ht[si.ch[ch].gr[gr].count1table_select+32];
+		h = HuffcodeTable.HT[si.ch[ch].gr[gr].count1table_select+32];
 		num_bits = br.hsstell();
 
 		while ((num_bits < part2_3_end) && (index < 576))
 		{
-			huffcodetab.huffman_decoder(h, xyvw, br);
+			HuffcodeTable.huffman_decoder(h, xyvw, br);
 			is_1d[index++] = xyvw.v;
 			is_1d[index++] = xyvw.w;
 			is_1d[index++] = xyvw.x;

@@ -28,9 +28,7 @@ package javazoom.jl.decoder;
  * @author	MDM
  */
 interface DecoderErrors extends JavaLayerErrors
-{
-	static public final int UNKNOWN_ERROR = DECODER_ERROR + 0;
-	
+{	
 	/**
 	 * Layer not supported by the decoder. 
 	 */

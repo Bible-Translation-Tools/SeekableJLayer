@@ -32,32 +32,22 @@ import java.io.PrintStream;
  * 
  * @author MDM
  */
-@SuppressWarnings("serial")
-public class JavaLayerException extends Exception
+@SuppressWarnings("serial") 
+class JavaLayerException extends Exception
 {
-	private Throwable		exception;
+	private final Throwable	exception;
 	
 	public JavaLayerException()
 	{
-	}
+		exception=null;
+	}	
 	
-	public JavaLayerException(String msg)
-	{
-		super(msg);
-	}
-	
-	public JavaLayerException(String msg, Throwable t)
+	JavaLayerException(String msg, Throwable t)
 	{
 		super(msg);
 		exception = t;
 	}
-	
-	public Throwable getException()
-	{
-		return exception;	
-	}
-	
-	
+		
 	public void printStackTrace()
 	{
 		printStackTrace(System.err);	
@@ -74,6 +64,4 @@ public class JavaLayerException extends Exception
 			exception.printStackTrace();
 		}
 	}
-	
-	
 }

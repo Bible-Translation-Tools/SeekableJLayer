@@ -36,66 +36,56 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *----------------------------------------------------------------------
  */
-
 package javazoom.jl.decoder;
 
 /**
  * Class to implements Huffman decoder.
  */
-final class huffcodetab
+final class HuffcodeTable
 {
-	private static final int	 MXOFF=250;
-	private static final int	 HTN=34;
+	private static final int MXOFF=250;
+	private static final int HTN=34;
+	private final char    tablename0;     /* string, containing table_description   */
+	private final char    tablename1;     /* string, containing table_description   */
+	private final int	  xlen; 		  /* max. x-index+                          */
+	private final int	  ylen;	          /* max. y-index+				          */
+	private final int	  linbits; 		  /* number of linbits   	                  */
+	private final int[][] val;		 	  /* decoder tree		    	              */
+	private final int 	  treelen;	      /* length of decoder tree  	              */
 
-	private char				 tablename0 = ' ';      /* string, containing table_description   */
-	private char				 tablename1 = ' ';      /* string, containing table_description   */
-	//  private char				 tablename2 = ' ';      /* string, containing table_description   */
-
-	private final int				 xlen; 			        /* max. x-index+                          */
-	private final int				 ylen;	                /* max. y-index+				          */
-	private final int				 linbits; 		        /* number of linbits   	                  */
-	//  private int 				 linmax;		        /* max number to be stored in linbits	  */
-	//  private int				 ref;			        /* a positive value indicates a reference */
-	// private int[]				 table=null;	        /* pointer to array[xlen][ylen]		      */
-	//  private int[]   			 hlen=null;             /* pointer to array[xlen][ylen]		      */
-	private int[][]			 val=null;		        /* decoder tree		    	              */
-	private final int 				 treelen;	            /* length of decoder tree  	              */
-
-	private static final int ValTab0[][] = {
+	private static final int VAL_TAB_DUMMY[][] = {
 		{0,0}	// dummy
 	};
 
-	private static final int ValTab1[][] = {
+	private static final int VAL_TAB_1[][] = {
 		{2,1},{0,0},{2,1},{0,16},{2,1},{0,1},{0,17},
 	};
 
-	private static final int ValTab2[][] = {
+	private static final int VAL_TAB_2[][] = {
 		{2,1},{0,0},{4,1},{2,1},{0,16},{0,1},{2,1},{0,17},{4,1},{2,1},
 		{0,32},{0,33},{2,1},{0,18},{2,1},{0,2},{0,34},
 	};
 
-	private static final int ValTab3[][] = {
+	private static final int VAL_TAB_3[][] = {
 		{4,1},{2,1},{0,0},{0,1},{2,1},{0,17},{2,1},{0,16},{4,1},{2,1},
 		{0,32},{0,33},{2,1},{0,18},{2,1},{0,2},{0,34},
 	};
 
-	private static final int ValTab4[][] = {{0,0}};	// dummy
-
-	private static final int ValTab5[][] = {
+	private static final int VAL_TAB_5[][] = {
 		{2,1},{0,0},{4,1},{2,1},{0,16},{0,1},{2,1},{0,17},{8,1},{4,1},
 		{2,1},{0,32},{0,2},{2,1},{0,33},{0,18},{8,1},{4,1},{2,1},{0,34},
 		{0,48},{2,1},{0,3},{0,19},{2,1},{0,49},{2,1},{0,50},{2,1},{0,35},
 		{0,51},
 	};
 
-	private static final int ValTab6[][] = {
+	private static final int VAL_TAB_6[][] = {
 		{6,1},{4,1},{2,1},{0,0},{0,16},{0,17},{6,1},{2,1},{0,1},{2,1},
 		{0,32},{0,33},{6,1},{2,1},{0,18},{2,1},{0,2},{0,34},{4,1},{2,1},
 		{0,49},{0,19},{4,1},{2,1},{0,48},{0,50},{2,1},{0,35},{2,1},{0,3},
 		{0,51},
 	};
 
-	private static final int ValTab7[][] = {
+	private static final int VAL_TAB_7[][] = {
 		{2,1},{0,0},{4,1},{2,1},{0,16},{0,1},{8,1},{2,1},{0,17},{4,1},
 		{2,1},{0,32},{0,2},{0,33},{18,1},{6,1},{2,1},{0,18},{2,1},{0,34},
 		{0,48},{4,1},{2,1},{0,49},{0,19},{4,1},{2,1},{0,3},{0,50},{2,1},
@@ -106,7 +96,7 @@ final class huffcodetab
 		{0,85},
 	};
 
-	private static final int ValTab8[][] = {
+	private static final int VAL_TAB_8[][] = {
 		{6,1},{2,1},{0,0},{2,1},{0,16},{0,1},{2,1},{0,17},{4,1},{2,1},
 		{0,33},{0,18},{14,1},{4,1},{2,1},{0,32},{0,2},{2,1},{0,34},{4,1},
 		{2,1},{0,48},{0,3},{2,1},{0,49},{0,19},{14,1},{8,1},{4,1},{2,1},
@@ -117,7 +107,7 @@ final class huffcodetab
 		{0,85},
 	};
 
-	private static final int ValTab9[][] = {
+	private static final int VAL_TAB_9[][] = {
 		{8,1},{4,1},{2,1},{0,0},{0,16},{2,1},{0,1},{0,17},{10,1},{4,1},
 		{2,1},{0,32},{0,33},{2,1},{0,18},{2,1},{0,2},{0,34},{12,1},{6,1},
 		{4,1},{2,1},{0,48},{0,3},{0,49},{2,1},{0,19},{2,1},{0,50},{0,35},
@@ -128,7 +118,7 @@ final class huffcodetab
 		{0,85},
 	};
 
-	private static final int ValTab10[][] = {
+	private static final int VAL_TAB_10[][] = {
 		{2,1},{0,0},{4,1},{2,1},{0,16},{0,1},{10,1},{2,1},{0,17},{4,1},
 		{2,1},{0,32},{0,2},{2,1},{0,33},{0,18},{28,1},{8,1},{4,1},{2,1},
 		{0,34},{0,48},{2,1},{0,49},{0,19},{8,1},{4,1},{2,1},{0,3},{0,50},
@@ -144,7 +134,7 @@ final class huffcodetab
 		{4,1},{2,1},{0,87},{0,118},{2,1},{0,103},{0,119},
 	};
 
-	private static final int ValTab11[][] = {
+	private static final int VAL_TAB_11[][] = {
 		{6,1},{2,1},{0,0},{2,1},{0,16},{0,1},{8,1},{2,1},{0,17},{4,1},
 		{2,1},{0,32},{0,2},{0,18},{24,1},{8,1},{2,1},{0,33},{2,1},{0,34},
 		{2,1},{0,48},{0,3},{4,1},{2,1},{0,49},{0,19},{4,1},{2,1},{0,50},
@@ -160,7 +150,7 @@ final class huffcodetab
 		{4,1},{2,1},{0,117},{0,118},{2,1},{0,103},{0,119},
 	};
 
-	private static final int ValTab12[][] = {
+	private static final int VAL_TAB_12[][] = {
 		{12,1},{4,1},{2,1},{0,16},{0,1},{2,1},{0,17},{2,1},{0,0},{2,1},
 		{0,32},{0,2},{16,1},{4,1},{2,1},{0,33},{0,18},{4,1},{2,1},{0,34},
 		{0,49},{2,1},{0,19},{2,1},{0,48},{2,1},{0,3},{0,64},{26,1},{8,1},
@@ -176,7 +166,7 @@ final class huffcodetab
 		{0,117},{0,87},{2,1},{0,118},{2,1},{0,103},{0,119},
 	};
 
-	private static final int ValTab13[][] = {
+	private static final int VAL_TAB_13[][] = {
 		{2,1},{0,0},{6,1},{2,1},{0,16},{2,1},{0,1},{0,17},{28,1},{8,1},
 		{4,1},{2,1},{0,32},{0,2},{2,1},{0,33},{0,18},{8,1},{4,1},{2,1},
 		{0,34},{0,48},{2,1},{0,3},{0,49},{6,1},{2,1},{0,19},{2,1},{0,50},
@@ -231,11 +221,7 @@ final class huffcodetab
 		{0,254},
 	};
 
-	private static final int ValTab14[][] = {
-		{0,0}  // dummy
-	};
-
-	private static final int ValTab15[][] = {
+	private static final int VAL_TAB_15[][] = {
 		{16,1},{6,1},{2,1},{0,0},{2,1},{0,16},{0,1},{2,1},{0,17},{4,1},
 		{2,1},{0,32},{0,2},{2,1},{0,33},{0,18},{50,1},{16,1},{6,1},{2,1},
 		{0,34},{2,1},{0,48},{0,49},{6,1},{2,1},{0,19},{2,1},{0,3},{0,64},
@@ -290,7 +276,7 @@ final class huffcodetab
 		{0,255},
 	};
 
-	private static final int  ValTab16[][] = {
+	private static final int  VAL_TAB_16[][] = {
 		{2,1},{0,0},{6,1},{2,1},{0,16},{2,1},{0,1},{0,17},{42,1},{8,1},
 		{4,1},{2,1},{0,32},{0,2},{2,1},{0,33},{0,18},{10,1},{6,1},{2,1},
 		{0,34},{2,1},{0,48},{0,3},{2,1},{0,49},{0,19},{10,1},{4,1},{2,1},
@@ -345,7 +331,7 @@ final class huffcodetab
 		{0,239},
 	};
 
-	private static final int ValTab24[][] = {
+	private static final int VAL_TAB_24[][] = {
 		{60,1},{8,1},{4,1},{2,1},{0,0},{0,16},{2,1},{0,1},{0,17},{14,1},
 		{6,1},{4,1},{2,1},{0,32},{0,2},{0,33},{2,1},{0,18},{2,1},{0,34},
 		{2,1},{0,48},{0,3},{14,1},{4,1},{2,1},{0,49},{0,19},{4,1},{2,1},
@@ -400,58 +386,53 @@ final class huffcodetab
 		{0,254},{0,239},
 	};
 
-	private static final int ValTab32[][] = {
+	private static final int VAL_TAB_32[][] = {
 		{2,1},{0,0},{8,1},{4,1},{2,1},{0,8},{0,4},{2,1},{0,1},{0,2},
 		{8,1},{4,1},{2,1},{0,12},{0,10},{2,1},{0,3},{0,6},{6,1},{2,1},
 		{0,9},{2,1},{0,5},{0,7},{4,1},{2,1},{0,14},{0,13},{2,1},{0,15},
 		{0,11},
 	};
 
-	private static final int ValTab33[][] = {
+	private static final int VAL_TAB_33[][] = {
 		{16,1},{8,1},{4,1},{2,1},{0,0},{0,1},{2,1},{0,2},{0,3},{4,1},
 		{2,1},{0,4},{0,5},{2,1},{0,6},{0,7},{8,1},{4,1},{2,1},{0,8},
 		{0,9},{2,1},{0,10},{0,11},{4,1},{2,1},{0,12},{0,13},{2,1},{0,14},
 		{0,15},
 	};
 
-	public final static huffcodetab[] ht = new huffcodetab[HTN];     /* Simulate extern struct                 */
-
-	//  private static int[] bitbuf = new int[32];
+	public final static HuffcodeTable[] HT = new HuffcodeTable[HTN];
 
 	/**
 	 * Big Constructor : Computes all Huffman Tables.
 	 */
-	private huffcodetab(String S,int XLEN, int YLEN, int LINBITS, int LINMAX, int REF,
-			int[] TABLE, int[] HLEN, int[][] VAL, int TREELEN)                     
+	private HuffcodeTable(String S, int XLEN, int YLEN, int LINBITS, int REF, int[] TABLE, int[] HLEN, int[][] VAL, int TREELEN)                     
 	{
 		tablename0 = S.charAt(0);
 		tablename1 = S.charAt(1);
-		//	tablename2 = S.charAt(2);
 		xlen = XLEN;
 		ylen = YLEN;
 		linbits = LINBITS;
-		//   linmax = LINMAX;
-		//   ref = REF;
-		//   table = TABLE;
-		//   hlen = HLEN;
 		val = VAL;
 		treelen = TREELEN;
 	}
 
+	/**
+	 * A class to transfer data to the calling function.
+	 */
 	final public static class Xyvw
 	{
 		int x;
 		int y;
 		int v;
 		int w;
-	}
+	};
 
 	/**
 	 * Do the huffman-decoding.
 	 * note! for counta,countb -the 4 bit value is returned in y,
 	 * discard x.
 	 */
-	public static int huffman_decoder(huffcodetab h, final Xyvw xyvw, BitReserve br)
+	public static int huffman_decoder(HuffcodeTable h, final Xyvw xyvw, BitReserve br)
 	{
 		// array of all huffcodtable headers
 		// 0..31 Huffman code table 0..31
@@ -473,11 +454,6 @@ final class huffcodetab
 		}
 
 		/* Lookup in Huffman table. */
-
-		/*int bitsAvailable = 0;	 
-	 int bitIndex = 0;
-
-	 int bits[] = bitbuf;*/
 		do 
 		{
 			if (h.val[point][0]==0)
@@ -488,17 +464,6 @@ final class huffcodetab
 				error = 0;
 				break;
 			}
-
-			// hget1bit() is called thousands of times, and so needs to be
-			// ultra fast. 
-			/*
-		if (bitIndex==bitsAvailable)
-		{
-			bitsAvailable = br.readBits(bits, 32);			
-			bitIndex = 0;
-		}
-			 */
-			//if (bits[bitIndex++]!=0)
 			if (br.hget1bit()!=0)
 			{
 				while (h.val[point][1] >= MXOFF) point += h.val[point][1];
@@ -513,12 +478,6 @@ final class huffcodetab
 			// MDM: ht[0] is always 0;
 		} while ((level !=0 )  || (point < 0 /*ht[0].treelen*/) );
 
-		// put back any bits not consumed
-		/*	
-	 int unread = (bitsAvailable-bitIndex);
-		if (unread>0)
-			br.rewindNbits(unread);
-		 */
 		/* Process sign encodings for quadruples tables. */
 		if (h.tablename0 == '3' && (h.tablename1 == '2' || h.tablename1 == '3'))
 		{
@@ -543,7 +502,6 @@ final class huffcodetab
 			// Process sign and escape encodings for dual tables.
 			// x and y are reversed in the test bitstream.
 			// Reverse x and y here to make test bitstream work.
-
 			if (h.linbits != 0)
 				if ((h.xlen-1) == xyvw.x)
 					xyvw.x += br.hgetbits(h.linbits);
@@ -560,43 +518,41 @@ final class huffcodetab
 
 	public static void inithuff()
 	{
+		if (HT [0]!=null) return;
 
-		if (ht [0]!=null)
-			return;
-
-		ht[0] = new huffcodetab("0  ",0,0,0,0,-1,null,null,ValTab0,0);
-		ht[1] = new huffcodetab("1  ",2,2,0,0,-1,null,null,ValTab1,7);
-		ht[2] = new huffcodetab("2  ",3,3,0,0,-1,null,null,ValTab2,17);
-		ht[3] = new huffcodetab("3  ",3,3,0,0,-1,null,null,ValTab3,17);
-		ht[4] = new huffcodetab("4  ",0,0,0,0,-1,null,null,ValTab4,0);    
-		ht[5] = new huffcodetab("5  ",4,4,0,0,-1,null,null,ValTab5,31);
-		ht[6] = new huffcodetab("6  ",4,4,0,0,-1,null,null,ValTab6,31);
-		ht[7] = new huffcodetab("7  ",6,6,0,0,-1,null,null,ValTab7,71);
-		ht[8] = new huffcodetab("8  ",6,6,0,0,-1,null,null,ValTab8,71);
-		ht[9] = new huffcodetab("9  ",6,6,0,0,-1,null,null,ValTab9,71);
-		ht[10] = new huffcodetab("10 ",8,8,0,0,-1,null,null,ValTab10,127);  
-		ht[11] = new huffcodetab("11 ",8,8,0,0,-1,null,null,ValTab11,127);
-		ht[12] = new huffcodetab("12 ",8,8,0,0,-1,null,null,ValTab12,127);
-		ht[13] = new huffcodetab("13 ",16,16,0,0,-1,null,null,ValTab13,511);
-		ht[14] = new huffcodetab("14 ",0,0,0,0,-1,null,null,ValTab14,0);
-		ht[15] = new huffcodetab("15 ",16,16,0,0,-1,null,null,ValTab15,511);
-		ht[16] = new huffcodetab("16 ",16,16,1,1,-1,null,null,ValTab16,511);
-		ht[17] = new huffcodetab("17 ",16,16,2,3,16,null,null,ValTab16,511);
-		ht[18] = new huffcodetab("18 ",16,16,3,7,16,null,null,ValTab16,511);
-		ht[19] = new huffcodetab("19 ",16,16,4,15,16,null,null,ValTab16,511);
-		ht[20] = new huffcodetab("20 ",16,16,6,63,16,null,null,ValTab16,511);
-		ht[21] = new huffcodetab("21 ",16,16,8,255,16,null,null,ValTab16,511);
-		ht[22] = new huffcodetab("22 ",16,16,10,1023,16,null,null,ValTab16,511);
-		ht[23] = new huffcodetab("23 ",16,16,13,8191,16,null,null,ValTab16,511);
-		ht[24] = new huffcodetab("24 ",16,16,4,15,-1,null,null,ValTab24,512);
-		ht[25] = new huffcodetab("25 ",16,16,5,31,24,null,null,ValTab24,512);
-		ht[26] = new huffcodetab("26 ",16,16,6,63,24,null,null,ValTab24,512);
-		ht[27] = new huffcodetab("27 ",16,16,7,127,24,null,null,ValTab24,512);
-		ht[28] = new huffcodetab("28 ",16,16,8,255,24,null,null,ValTab24,512);  
-		ht[29] = new huffcodetab("29 ",16,16,9,511,24,null,null,ValTab24,512);
-		ht[30] = new huffcodetab("30 ",16,16,11,2047,24,null,null,ValTab24,512);
-		ht[31] = new huffcodetab("31 ",16,16,13,8191,24,null,null,ValTab24,512);
-		ht[32] = new huffcodetab("32 ",1,16,0,0,-1,null,null,ValTab32,31);
-		ht[33] = new huffcodetab("33 ",1,16,0,0,-1,null,null,ValTab33,31);
+		HT[0] = new HuffcodeTable("0  ",0,0,0,-1,null,null,VAL_TAB_DUMMY,0);
+		HT[1] = new HuffcodeTable("1  ",2,2,0,-1,null,null,VAL_TAB_1,7);
+		HT[2] = new HuffcodeTable("2  ",3,3,0,-1,null,null,VAL_TAB_2,17);
+		HT[3] = new HuffcodeTable("3  ",3,3,0,-1,null,null,VAL_TAB_3,17);
+		HT[4] = new HuffcodeTable("4  ",0,0,0,-1,null,null,VAL_TAB_DUMMY,0);    
+		HT[5] = new HuffcodeTable("5  ",4,4,0,-1,null,null,VAL_TAB_5,31);
+		HT[6] = new HuffcodeTable("6  ",4,4,0,-1,null,null,VAL_TAB_6,31);
+		HT[7] = new HuffcodeTable("7  ",6,6,0,-1,null,null,VAL_TAB_7,71);
+		HT[8] = new HuffcodeTable("8  ",6,6,0,-1,null,null,VAL_TAB_8,71);
+		HT[9] = new HuffcodeTable("9  ",6,6,0,-1,null,null,VAL_TAB_9,71);
+		HT[10] = new HuffcodeTable("10 ",8,8,0,-1,null,null,VAL_TAB_10,127);  
+		HT[11] = new HuffcodeTable("11 ",8,8,0,-1,null,null,VAL_TAB_11,127);
+		HT[12] = new HuffcodeTable("12 ",8,8,0,-1,null,null,VAL_TAB_12,127);
+		HT[13] = new HuffcodeTable("13 ",16,16,0,-1,null,null,VAL_TAB_13,511);
+		HT[14] = new HuffcodeTable("14 ",0,0,0,-1,null,null,VAL_TAB_DUMMY,0);
+		HT[15] = new HuffcodeTable("15 ",16,16,0,-1,null,null,VAL_TAB_15,511);
+		HT[16] = new HuffcodeTable("16 ",16,16,1,-1,null,null,VAL_TAB_16,511);
+		HT[17] = new HuffcodeTable("17 ",16,16,2,16,null,null,VAL_TAB_16,511);
+		HT[18] = new HuffcodeTable("18 ",16,16,3,16,null,null,VAL_TAB_16,511);
+		HT[19] = new HuffcodeTable("19 ",16,16,4,16,null,null,VAL_TAB_16,511);
+		HT[20] = new HuffcodeTable("20 ",16,16,6,16,null,null,VAL_TAB_16,511);
+		HT[21] = new HuffcodeTable("21 ",16,16,8,16,null,null,VAL_TAB_16,511);
+		HT[22] = new HuffcodeTable("22 ",16,16,10,16,null,null,VAL_TAB_16,511);
+		HT[23] = new HuffcodeTable("23 ",16,16,13,16,null,null,VAL_TAB_16,511);
+		HT[24] = new HuffcodeTable("24 ",16,16,4,-1,null,null,VAL_TAB_24,512);
+		HT[25] = new HuffcodeTable("25 ",16,16,5,24,null,null,VAL_TAB_24,512);
+		HT[26] = new HuffcodeTable("26 ",16,16,6,24,null,null,VAL_TAB_24,512);
+		HT[27] = new HuffcodeTable("27 ",16,16,7,24,null,null,VAL_TAB_24,512);
+		HT[28] = new HuffcodeTable("28 ",16,16,8,24,null,null,VAL_TAB_24,512);  
+		HT[29] = new HuffcodeTable("29 ",16,16,9,24,null,null,VAL_TAB_24,512);
+		HT[30] = new HuffcodeTable("30 ",16,16,11,24,null,null,VAL_TAB_24,512);
+		HT[31] = new HuffcodeTable("31 ",16,16,13,24,null,null,VAL_TAB_24,512);
+		HT[32] = new HuffcodeTable("32 ",1,16,0,-1,null,null,VAL_TAB_32,31);
+		HT[33] = new HuffcodeTable("33 ",1,16,0,-1,null,null,VAL_TAB_33,31);
 	}
 }
