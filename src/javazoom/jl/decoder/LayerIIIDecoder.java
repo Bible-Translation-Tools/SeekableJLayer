@@ -1984,23 +1984,6 @@ final class LayerIIIDecoder implements FrameDecoder
 	 */
 	private static /*final*/ int reorder_table[][]/* = loadReorderTable()*/;	// SZD: will be generated on demand
 
-	/**
-	 * Loads the data for the reorder
-	 */
-	/*private static int[][] loadReorderTable()	// SZD: table will be generated
-	{
-		try
-		{
-			Class elemType = int[][].class.getComponentType();
-			Object o = JavaLayerUtils.deserializeArrayResource("l3reorder.ser", elemType, 6);
-			return (int[][])o;
-		}
-		catch (IOException ex)
-		{
-			throw new ExceptionInInitializerError(ex);
-		}
-	}*/
-
 	private static int[] reorder(int scalefac_band[]) {	// SZD: converted from LAME
 		int j = 0;
 		int ix[] = new int[576];

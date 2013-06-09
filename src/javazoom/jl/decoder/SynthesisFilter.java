@@ -37,8 +37,6 @@
  */
 package javazoom.jl.decoder;
 
-import java.io.IOException;
-
 /**
  * WVB - TODO - we have two of these instances floating around; which is fine. Each instance will try to tell an OBuffer 
  * that it has data. This is silly because I believe we can do that at a synchronous position ourselves. That would mean
@@ -63,7 +61,7 @@ final class SynthesisFilter
 	{  	 
 		if (d==null)
 		{
-			d = load_d();
+			d = Sfd.SFD;
 			d16 = splitArray(d, 16);
 		}
 
@@ -1127,7 +1125,6 @@ final class SynthesisFilter
 
 	// Note: These values are not in the same order
 	// as in Annex 3-B.3 of the ISO/IEC DIS 11172-3 
-	// private float d[] = {0.000000000, -4.000442505};
 	private static float d[] = null;
 
 	/** 
@@ -1175,25 +1172,6 @@ final class SynthesisFilter
 	}
 	
 	private static D16 d16[] = null;
-
-	/**
-	 * Loads the data for the d[] from the resource SFd.ser. 
-	 * @return the loaded values for d[].
-	 */
-	@SuppressWarnings("rawtypes")
-	static private float[] load_d()
-	{
-		try
-		{
-			Class elemType = Float.TYPE;
-			Object o = JavaLayerUtils.deserializeArrayResource("sfd.ser", elemType, 512);
-			return (float[])o;
-		}
-		catch (IOException ex)
-		{
-			throw new ExceptionInInitializerError(ex);
-		}		
-	}
 
 	/**
 	 * Converts a 1D array into a number of smaller arrays. This is used
