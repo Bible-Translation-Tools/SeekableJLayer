@@ -3,7 +3,7 @@
  * 			while at the same time applying an equalizing for each of the input samples. 
  * 			Obviously this is a totally useless operation, since we could achieve the 
  * 			scalefactor as well using the equalizer directly. This would even be more 
- * 			efficient since the scalefactor is then appliued to 32 samples, and 
+ * 			efficient since the scalefactor is then applied to 32 samples, and 
  * 			automatically expanded to 512 samples. - WVB
  * 
  * 11/19/04 1.0 moved to LGPL.
@@ -59,12 +59,7 @@ final class SynthesisFilter
 
 	public SynthesisFilter(int channelnumber)
 	{  	 
-		if (d==null)
-		{
-			d = Sfd.SFD;
-			d16 = splitArray(d, 16);
-		}
-
+		d16 = splitArray(Sfd.SFD, 16);
 		v1 = new float[512];
 		v2 = new float[512];
 		channel = channelnumber;
@@ -1123,10 +1118,6 @@ final class SynthesisFilter
 	private static final float cos3_8   =(float) (1.0 / (2.0 * Math.cos(MY_PI * 3.0  / 8.0)));
 	private static final float cos1_4   =(float) (1.0 / (2.0 * Math.cos(MY_PI / 4.0)));
 
-	// Note: These values are not in the same order
-	// as in Annex 3-B.3 of the ISO/IEC DIS 11172-3 
-	private static float d[] = null;
-
 	/** 
 	 * d[] split into subarrays of length 16. This provides for
 	 * more faster access by allowing a block of 16 to be addressed
@@ -1170,7 +1161,7 @@ final class SynthesisFilter
 			d15=d[15];
 		}
 	}
-	
+
 	private static D16 d16[] = null;
 
 	/**

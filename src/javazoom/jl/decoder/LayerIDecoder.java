@@ -72,10 +72,9 @@ class LayerIDecoder implements FrameDecoder
 		readAllocation();
 		readScaleFactorSelection();
 		
-	    if ((crc != null) || header.checksum_ok())
+	    if ((crc == null) || header.checksum_ok())
   		{
 			readScaleFactors();
-			
 			readSampleData();			
 		}
 
@@ -256,8 +255,7 @@ class LayerIDecoder implements FrameDecoder
 	  }
 
 	  /**
-	 * @throws BitstreamException 
-	   *
+	   * @throws BitstreamException 
 	   */
 	  public boolean read_sampledata(Bitstream stream) throws BitstreamException
 	  {
@@ -273,9 +271,6 @@ class LayerIDecoder implements FrameDecoder
 	    return false;  
 	  }
 
-	  /**
-	   *
-	   */
 	  public boolean put_next_sample(int channels, SynthesisFilter filter1, SynthesisFilter filter2)
 	  {
 	    if ((allocation !=0) && (channels != OutputChannels.RIGHT_CHANNEL))
@@ -312,8 +307,7 @@ class LayerIDecoder implements FrameDecoder
 	  }
 	  
 	  /**
-	 * @throws BitstreamException 
-	   *
+	   * @throws BitstreamException 
 	   */
 	  public void read_scalefactor (Bitstream stream, Header header) throws BitstreamException
 	  {

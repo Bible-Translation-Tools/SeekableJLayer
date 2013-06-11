@@ -5,6 +5,8 @@ package javazoom.jl.decoder;
 
 final class Sfd
 {
+	// Note: These values are not in the same order
+	// as in Annex 3-B.3 of the ISO/IEC DIS 11172-3 
 	final static float[] SFD ={
 		0.0f, -4.42505E-4f, 0.003250122f, -0.007003784f, 0.031082153f, -0.07862854f, 0.10031128f, -0.57203674f, 
 		1.144989f, 0.57203674f, 0.10031128f, 0.07862854f, 0.031082153f, 0.007003784f, 0.003250122f, 4.42505E-4f, 
