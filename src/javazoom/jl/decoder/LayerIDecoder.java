@@ -195,6 +195,9 @@ class LayerIDecoder implements FrameDecoder
 	  (1.0f/512.0f) * (1024.0f/1023.0f), (1.0f/1024.0f) * (2048.0f/2047.0f),
 	  (1.0f/2048.0f) * (4096.0f/4095.0f), (1.0f/4096.0f) * (8192.0f/8191.0f),
 	  (1.0f/8192.0f) * (16384.0f/16383.0f), (1.0f/16384.0f) * (32768.0f/32767.0f)
+	  
+	  // WVB - fix for array out of bound exception
+	  ,0.0f
 	  };
 
 	  public static final float table_offset[] = {
@@ -204,6 +207,9 @@ class LayerIDecoder implements FrameDecoder
 	  ((1.0f/512.0f)-1.0f) * (1024.0f/1023.0f), ((1.0f/1024.0f)-1.0f) * (2048.0f/2047.0f),
 	  ((1.0f/2048.0f)-1.0f) * (4096.0f/4095.0f), ((1.0f/4096.0f)-1.0f) * (8192.0f/8191.0f),
 	  ((1.0f/8192.0f)-1.0f) * (16384.0f/16383.0f), ((1.0f/16384.0f)-1.0f) * (32768.0f/32767.0f)
+	  
+	  // WVB - fix for that array out of bound exception
+	  ,0.0f
 	  };
 
 	  protected int			 subbandnumber;
@@ -368,17 +374,16 @@ class LayerIDecoder implements FrameDecoder
 	  private float	channel2_sample;
 	  private float channel2_factor, channel2_offset;
 
-	  /**
-	   * Constructor
-	   */
 	  private SubbandLayer1Stereo(int subbandnumber)
 	  {
 	    super(subbandnumber);
 	  }
 	  
 	  /**
-	 * @throws BitstreamException 
-	   *
+	   * It is possible here that allocation and channel2_allocation are 15, that is however an invalid value
+	   * and the table_factor and table_offset tables do not have entries for those. 
+	   * If such a value occurs... the problem is mainly... what to do about it ? 
+	   * Assume it is some other 
 	   */
 	  public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException
 	  {
@@ -403,20 +408,12 @@ class LayerIDecoder implements FrameDecoder
 	     }
 	  }
 	  
-	  /**
-	 * @throws BitstreamException 
-	   *
-	   */
 	  public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
 	  {
 	    if (allocation != 0) scalefactor = scalefactors[stream.get_bits(6)];
 	    if (channel2_allocation != 0) channel2_scalefactor = scalefactors[stream.get_bits(6)];
 	  }
 
-	  /**
-	 * @throws BitstreamException 
-	   *
-	   */
 	  public boolean read_sampledata (Bitstream stream) throws BitstreamException
 	  {
 	     boolean returnvalue = super.read_sampledata(stream);
@@ -450,5 +447,4 @@ class LayerIDecoder implements FrameDecoder
 	public void seek_notify() 
 	{
 	};
-	
 }
