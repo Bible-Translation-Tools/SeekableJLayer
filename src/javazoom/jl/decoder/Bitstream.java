@@ -120,8 +120,9 @@ public final class Bitstream implements BitstreamErrors
 
 	private final Crc16[]			crc = new Crc16[1];
 
-	private byte[]					rawid3v2 = null;
-
+	// WVB - we removed this field since it is never used
+	// private byte[]					rawid3v2 = null;
+	
 	private boolean					firstframe = true;
 
 
@@ -170,8 +171,10 @@ public final class Bitstream implements BitstreamErrors
 		{
 			if (size > 0)
 			{
-				rawid3v2 = new byte[size];
-				in.read(rawid3v2,0,rawid3v2.length);
+				// WVB - don't load since not used, but do skip
+				// rawid3v2 = new byte[size];
+				// in.read(rawid3v2,0,rawid3v2.length);
+				in.skip(size);
 			}			
 		}
 		catch (IOException e)
