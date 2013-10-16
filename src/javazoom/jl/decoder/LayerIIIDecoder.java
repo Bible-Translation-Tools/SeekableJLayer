@@ -73,12 +73,6 @@ final class LayerIIIDecoder implements FrameDecoder
 	private final int 				last_channel;
 	private final int					sfreq;
 
-
-	/**
-	 * Constructor.
-	 */
-	// REVIEW: these constructor arguments should be moved to the
-	// decodeFrame() method, where possible, so that one
 	public LayerIIIDecoder(Bitstream stream0, Header header0,
 			SynthesisFilter filtera, SynthesisFilter filterb,
 			Obuffer buffer0, int which_ch0)
@@ -167,11 +161,9 @@ final class LayerIIIDecoder implements FrameDecoder
 			case OutputChannels.DOWNMIX_CHANNELS:
 				first_channel = last_channel = 0;
 				break;
-
 			case OutputChannels.RIGHT_CHANNEL:
 				first_channel = last_channel = 1;
 				break;
-
 			case OutputChannels.BOTH_CHANNELS:
 			default:
 				first_channel  = 0;
@@ -275,7 +267,6 @@ final class LayerIIIDecoder implements FrameDecoder
 
 				for (ch=first_channel; ch<=last_channel; ch++)
 				{
-
 					reorder(lr[ch], ch, gr);
 					antialias(ch, gr);
 
@@ -299,7 +290,7 @@ final class LayerIIIDecoder implements FrameDecoder
 							}
 							filter1.calculate_pcm_samples_layer_iii(buffer);
 						}
-					} 
+					}
 					else
 					{
 						for (ss=0;ss<SSLIMIT;ss++)
@@ -1061,35 +1052,34 @@ final class LayerIIIDecoder implements FrameDecoder
 	{
 		int sb, ss;
 
-		if  (channels == 1) { // mono , bypass xr[0][][] to lr[0][][]
-
+		if  (channels == 1) 
+		{
+			// mono , bypass xr[0][][] to lr[0][][]
 			for(sb=0;sb<SBLIMIT;sb++)
 				for(ss=0;ss<SSLIMIT;ss+=3) {
 					lr[0][sb][ss]   = ro[0][sb][ss];
 					lr[0][sb][ss+1] = ro[0][sb][ss+1];
 					lr[0][sb][ss+2] = ro[0][sb][ss+2];
 				}
-
-		} else {
-
+		}
+		else 
+		{
 			gr_info_s gr_info = (si.ch[0].gr[gr]);
 			int mode_ext = header.mode_extension();
 			int sfb;
 			int i;
 			int lines, temp, temp2;
 
-			boolean ms_stereo = ((header.mode() == Header.JOINT_STEREO) && ((mode_ext & 0x2)!=0));
-			boolean i_stereo  = ((header.mode() == Header.JOINT_STEREO) && ((mode_ext & 0x1)!=0));
-			boolean lsf = ((header.version() == Header.MPEG2_LSF || header.version() == Header.MPEG25_LSF ));	// SZD
+			final boolean ms_stereo = ((header.mode() == Header.JOINT_STEREO) && ((mode_ext & 0x2)!=0));
+			final boolean i_stereo  = ((header.mode() == Header.JOINT_STEREO) && ((mode_ext & 0x1)!=0));
+			final boolean lsf = ((header.version() == Header.MPEG2_LSF || header.version() == Header.MPEG25_LSF ));	// SZD
 
-			int io_type = (gr_info.scalefac_compress & 1);
+			final int io_type = (gr_info.scalefac_compress & 1);
 
 			// initialization
-
 			for (i=0; i<576; i++)
 			{
 				is_pos[i] = 7;
-
 				is_ratio[i] = 0.0f;
 			}
 
@@ -1111,7 +1101,7 @@ final class LayerIIIDecoder implements FrameDecoder
 									if (ro[1][i/18][i%18] != 0.0f) {
 										// MDM: in java, array access is very slow.
 										// Is quicker to compute div and mod values.
-										//if (ro[1][ss_div[i]][ss_mod[i]] != 0.0f) {
+										// if (ro[1][ss_div[i]][ss_mod[i]] != 0.0f) {
 										sfbcnt = sfb;
 										sfb = -10;
 										lines = -10;
@@ -1333,9 +1323,7 @@ final class LayerIIIDecoder implements FrameDecoder
 					}
 					i++;
 				}
-
 		} // channels == 2
-
 	}
 
 	private void antialias(int ch, int gr)

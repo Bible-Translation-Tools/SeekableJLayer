@@ -703,10 +703,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 				}
 
 			samplenumber = 0;
-			if (++groupnumber == 12)
-				return true;
-			else
-				return false;
+			return ++groupnumber == 12;
 		}
 
 		/**
@@ -729,10 +726,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 				filter1.input_sample(sample, subbandnumber);
 			}
 
-			if (++samplenumber == 3)
-				return true;
-			else
-				return false;
+			return  ++samplenumber == 3;
 		}
 	};
 
@@ -1021,7 +1015,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 					target[tmp] = source[temp];
 					temp++;tmp++;
 					target[tmp] = source[temp];
-
 				} 
 				else 
 				{
@@ -1035,9 +1028,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			return returnvalue;
 		}
 
-		/**
-		 *
-		 */
 		public boolean put_next_sample(int channels, SynthesisFilter filter1, SynthesisFilter filter2)
 		{
 			boolean returnvalue = super.put_next_sample(channels, filter1, filter2);

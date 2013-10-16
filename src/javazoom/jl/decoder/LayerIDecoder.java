@@ -57,7 +57,6 @@ class LayerIDecoder implements FrameDecoder
 	  	filter2        = filterb;
 	  	buffer         = buffer0;
 	  	which_channels = which_ch0;
-		  
 	}
 	
 	public void decodeFrame() throws DecoderException, BitstreamException

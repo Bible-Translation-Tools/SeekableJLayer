@@ -30,8 +30,6 @@ package javazoom.jl.decoder;
  */
 public class Decoder implements DecoderErrors
 {
-	static private final Params DEFAULT_PARAMS = new Params();
-	
 	/**
 	 * The Obuffer instance that will receive the decoded
 	 * PCM samples.
@@ -59,27 +57,16 @@ public class Decoder implements DecoderErrors
 	private int						outputChannels;
 	private boolean					initialized;
 
+	final private int channelChoice;
+
 	/**
 	 * Creates a new <code>Decoder</code> instance with default 
 	 * parameters.
 	 */
 
-	public Decoder()
+	public Decoder(int channelChoice)
 	{
-		this(null);
-	}
-
-	/**
-	 * Creates a new <code>Decoder</code> instance with default 
-	 * parameters.
-	 * 
-	 * @param params	The <code>Params</code> instance that describes
-	 *					the customizable aspects of the decoder.  
-	 */
-	private Decoder(Params params0)
-	{
-		if (params0 == null)
-			params0 = DEFAULT_PARAMS;
+		this.channelChoice=channelChoice;
 	}
 
 	/**
@@ -143,11 +130,8 @@ public class Decoder implements DecoderErrors
 		return new DecoderException(errorcode, throwable);
 	}
 
-	// TODO - get rid of the decoder assignment before sending a result back.
 	private FrameDecoder retrieveDecoder(Header header, Bitstream stream, int layer) throws DecoderException
 	{
-		FrameDecoder decoder = null;
-
 		// REVIEW: allow channel output selection type
 		// (LEFT, RIGHT, BOTH, DOWNMIX)
 		switch (layer)
@@ -155,44 +139,28 @@ public class Decoder implements DecoderErrors
 		case 3:
 			if (l3decoder==null)
 			{
-				l3decoder = new LayerIIIDecoder(stream, 
-						header, filter1, filter2, 
-						output, OutputChannels.BOTH_CHANNELS);
-			}						
-
-			decoder = l3decoder;
-			break;
+				l3decoder = new LayerIIIDecoder(stream, header, filter1, filter2,output, channelChoice);
+			}
+			return l3decoder;
 		case 2:
 			if (l2decoder==null)
 			{
 				l2decoder = new LayerIIDecoder();
-				l2decoder.create(stream, 
-						header, filter1, filter2, 
-						output, OutputChannels.BOTH_CHANNELS);				
+				l2decoder.create(stream,header, filter1, filter2,output, channelChoice);				
 			}
-			decoder = l2decoder;
-			break;
+			return l2decoder;
 		case 1:
 			if (l1decoder==null)
 			{
 				l1decoder = new LayerIDecoder();
-				l1decoder.create(stream, 
-						header, filter1, filter2, 
-						output, OutputChannels.BOTH_CHANNELS);				
+				l1decoder.create(stream, header, filter1, filter2, output, channelChoice);				
 			}
-			decoder = l1decoder;
-			break;
+			return l1decoder;
 		}
-
-		if (decoder==null)
-		{
-			throw newDecoderException(UNSUPPORTED_LAYER, null);
-		}
-
-		return decoder;
+		throw newDecoderException(UNSUPPORTED_LAYER, null);
 	}
 
-	
+
 	private void initialize(Header header) throws DecoderException
 	{
 		// REVIEW: allow customizable scale factor
@@ -202,7 +170,7 @@ public class Decoder implements DecoderErrors
 		// set up output buffer if not set up by client.
 		if (output == null)
 			output = new SampleBuffer(header.frequency(), channels);
-		
+
 		filter1 = new SynthesisFilter(0);
 
 		// REVIEW: allow mono output for stereo
@@ -213,31 +181,6 @@ public class Decoder implements DecoderErrors
 		outputFrequency = header.frequency();
 
 		initialized = true;
-	}
-
-	/**
-	 * The <code>Params</code> class presents the customizable
-	 * aspects of the decoder. 
-	 * <p>
-	 * Instances of this class are not thread safe. 
-	 */
-	private static class Params implements Cloneable
-	{
-		public Params()
-		{			
-		}
-
-		public Object clone()
-		{
-			try
-			{
-				return super.clone();
-			}
-			catch (CloneNotSupportedException ex)
-			{				
-				throw new InternalError(this+": "+ex);
-			}
-		}
 	}
 
 	public void seek_notify() 
