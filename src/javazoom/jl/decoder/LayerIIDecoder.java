@@ -46,7 +46,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 				subbands[i] = new SubbandLayer2(i);
 		else if (mode == Header.JOINT_STEREO)
 		{
-			for (i = 0; i < header.intensity_stereo_bound(); ++i)
+			for (i = 0; i < stream.intensity_stereo_bound(); ++i)
 				subbands[i] = new SubbandLayer2Stereo(i);
 			for (; i < num_subbands; ++i)
 				subbands[i] = new SubbandLayer2IntensityStereo(i);
@@ -59,13 +59,11 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 
 	}
 
-	protected void readScaleFactorSelection() throws BitstreamException
+	protected void readScaleFactorSelection() throws JavaLayerException
 	{
 		for (int i = 0; i < num_subbands; ++i)
 			((SubbandLayer2)subbands[i]).read_scalefactor_selection(stream, crc);		
 	}
-
-
 
 	/**
 	 * Class for layer II subbands in single channel mode.
@@ -605,9 +603,9 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws BitstreamException
+		public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
-			int length = get_allocationlength(header);
+			int length = get_allocationlength(stream);
 			allocation = stream.get_bits(length);
 			if (crc != null) 
 				crc.add_bits(allocation, length);  
@@ -617,7 +615,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_scalefactor_selection (Bitstream stream, Crc16 crc) throws BitstreamException
+		public void read_scalefactor_selection (Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
 			if (allocation != 0)
 			{
@@ -630,7 +628,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_scalefactor (Bitstream stream, Header header) throws BitstreamException
+		public void read_scalefactor (Bitstream stream) throws JavaLayerException
 		{
 			if (allocation != 0)
 			{
@@ -653,8 +651,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 					scalefactor2 = scalefactor3 = scalefactors[stream.get_bits(6)];
 					break;
 				}
-				prepare_sample_reading(header, allocation, 0,
-						factor, codelength, c, d);
+				prepare_sample_reading(stream, allocation, 0, factor, codelength, c, d);
 			}
 		}
 
@@ -662,7 +659,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public boolean read_sampledata (Bitstream stream) throws BitstreamException
+		public boolean read_sampledata (Bitstream stream) throws JavaLayerException
 		{
 			if (allocation != 0)
 				if (groupingtable[0] != null)
@@ -750,16 +747,16 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws BitstreamException
+		public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
-			super.read_allocation (stream, header, crc);
+			super.read_allocation (stream, crc);
 		}
 
 		/**
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws BitstreamException
+		public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
 			if (allocation != 0)
 			{
@@ -777,11 +774,11 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
+		public void read_scalefactor(Bitstream stream) throws JavaLayerException
 		{
 			if (allocation != 0)
 			{
-				super.read_scalefactor(stream, header);
+				super.read_scalefactor(stream);
 				switch (channel2_scfsi)
 				{
 				case 0:
@@ -813,7 +810,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public boolean read_sampledata(Bitstream stream) throws BitstreamException
+		public boolean read_sampledata(Bitstream stream) throws JavaLayerException
 		{
 			return super.read_sampledata (stream);
 		}
@@ -908,7 +905,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws BitstreamException
+		public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws JavaLayerException
 		{
 			int length = get_allocationlength(header);
 			allocation = stream.get_bits(length);
@@ -924,7 +921,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws BitstreamException
+		public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
 			if (allocation != 0)
 			{
@@ -944,9 +941,9 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
+		public void read_scalefactor(Bitstream stream) throws JavaLayerException
 		{
-			super.read_scalefactor(stream, header);
+			super.read_scalefactor(stream);
 			if (channel2_allocation != 0)
 			{
 				switch (channel2_scfsi)
@@ -974,7 +971,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 							scalefactors[stream.get_bits(6)];
 					break;
 				}
-				prepare_sample_reading(header, channel2_allocation, 1,
+				prepare_sample_reading(stream, channel2_allocation, 1,
 						channel2_factor, channel2_codelength, channel2_c,
 						channel2_d);
 			}
@@ -984,7 +981,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws BitstreamException 
 		 *
 		 */
-		public boolean read_sampledata (Bitstream stream) throws BitstreamException
+		public boolean read_sampledata (Bitstream stream) throws JavaLayerException
 		{
 			boolean returnvalue = super.read_sampledata(stream);
 

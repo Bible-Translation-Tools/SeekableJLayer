@@ -31,10 +31,12 @@
  */
 package javazoom.jl.decoder;
 
+import java.io.EOFException;
+
 /**
  * Class for extracting information from a frame header.
  */
-public final class Header
+class Header
 {
 	/**
 	 * The frequency table:
@@ -114,8 +116,9 @@ public final class Header
 
 	/**
 	 * Read a 32-bit header from the bitstream, including the framedata itself.
+	 * @throws EOFException 
 	 */
-	void read_header(Bitstream stream, Crc16[] crcp) throws BitstreamException
+	void read_header(Bitstream stream, Crc16[] crcp) throws JavaLayerException
 	{
 		int headerstring;
 		int channel_bitrate;
@@ -131,11 +134,9 @@ public final class Header
 					if (h_version == MPEG2_LSF)
 						h_version = MPEG25_LSF;
 					else
-						throw stream.newBitstreamException(Bitstream.UNKNOWN_ERROR);
+						throw new BitStreamGeneralError("Header error",null);
 				if ((h_sample_frequency = ((headerstring >>> 10) & 3)) == 3)
-				{
-					throw stream.newBitstreamException(Bitstream.UNKNOWN_ERROR);
-				}
+					throw new BitStreamGeneralError("Frequency error",null);
 			}
 			h_layer = 4 - (headerstring >>> 17) & 3;
 			h_protection_bit = (headerstring >>> 16) & 1;
@@ -184,7 +185,7 @@ public final class Header
 			{
 				// Data loaded does not match to expected framesize,
 				// it might be an ID3v1 TAG. (Fix 11/17/04).
-				throw stream.newBitstreamException(Bitstream.INVALIDFRAME);
+				throw new InvalidFrame();
 			}
 			if (stream.isSyncCurrentPosition(syncmode))
 			{
@@ -240,7 +241,7 @@ public final class Header
 	 * @param firstframe
 	 * @author E.B (javalayer@javazoom.net)
 	 */
-	void parseVBR(byte[] firstframe) throws BitstreamException
+	void parseVBR(byte[] firstframe) throws JavaLayerException
 	{
 		// Trying Xing header.
 		String xing = "Xing";
@@ -306,7 +307,7 @@ public final class Header
 		}
 		catch (ArrayIndexOutOfBoundsException e)
 		{
-			throw new BitstreamException("XingVBRHeader Corrupted",e);
+			throw new BitStreamGeneralError("XingVBRHeader Corrupted",e);
 		}
 
 		// Trying VBRI header.			
@@ -338,7 +339,7 @@ public final class Header
 		}
 		catch (ArrayIndexOutOfBoundsException e)
 		{
-			throw new BitstreamException("VBRIVBRHeader Corrupted",e);
+			throw new BitStreamGeneralError("VBRIVBRHeader Corrupted",e);
 		}
 	}
 

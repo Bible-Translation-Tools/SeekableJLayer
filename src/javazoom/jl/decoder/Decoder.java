@@ -28,7 +28,7 @@ package javazoom.jl.decoder;
  * @version 0.0.7 12/12/99
  * @since	0.0.5
  */
-public class Decoder implements DecoderErrors
+public class Decoder 
 {
 	/**
 	 * The Obuffer instance that will receive the decoded
@@ -78,13 +78,13 @@ public class Decoder implements DecoderErrors
 	 * @return A SampleBuffer containing the decoded samples.
 	 * @throws BitstreamException 
 	 */
-	public Obuffer decodeFrame(Header header, Bitstream stream)	throws DecoderException, BitstreamException
+	public Obuffer decodeFrame(Bitstream stream) throws JavaLayerException
 	{
 		if (!initialized)
-			initialize(header);
+			initialize(stream);
 
-		int layer = header.layer();
-		final FrameDecoder decoder = retrieveDecoder(header, stream, layer);
+		int layer = stream.layer();
+		final FrameDecoder decoder = retrieveDecoder( stream, layer);
 		decoder.decodeFrame();
 		return output;
 	}
@@ -125,12 +125,7 @@ public class Decoder implements DecoderErrors
 		return outputChannels;	
 	}
 
-	private DecoderException newDecoderException(int errorcode, Throwable throwable)
-	{
-		return new DecoderException(errorcode, throwable);
-	}
-
-	private FrameDecoder retrieveDecoder(Header header, Bitstream stream, int layer) throws DecoderException
+	private FrameDecoder retrieveDecoder( Bitstream stream, int layer) throws UnsuportedLayer
 	{
 		// REVIEW: allow channel output selection type
 		// (LEFT, RIGHT, BOTH, DOWNMIX)
@@ -139,29 +134,28 @@ public class Decoder implements DecoderErrors
 		case 3:
 			if (l3decoder==null)
 			{
-				l3decoder = new LayerIIIDecoder(stream, header, filter1, filter2, output, channelChoice);
+				l3decoder = new LayerIIIDecoder(stream, filter1, filter2, output, channelChoice);
 			}
 			return l3decoder;
 		case 2:
 			if (l2decoder==null)
 			{
 				l2decoder = new LayerIIDecoder();
-				l2decoder.create(stream,header, filter1, filter2,output, channelChoice);				
+				l2decoder.create(stream, filter1, filter2, output, channelChoice);				
 			}
 			return l2decoder;
 		case 1:
 			if (l1decoder==null)
 			{
 				l1decoder = new LayerIDecoder();
-				l1decoder.create(stream, header, filter1, filter2, output, channelChoice);				
+				l1decoder.create(stream, filter1, filter2, output, channelChoice);				
 			}
 			return l1decoder;
 		}
-		throw newDecoderException(UNSUPPORTED_LAYER, null);
+		throw new UnsuportedLayer();
 	}
 
-
-	private void initialize(Header header) throws DecoderException
+	private void initialize(Header header) throws JavaLayerException
 	{
 		// REVIEW: allow customizable scale factor
 		int mode = header.mode();

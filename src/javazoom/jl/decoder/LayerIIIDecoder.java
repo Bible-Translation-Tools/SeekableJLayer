@@ -55,7 +55,6 @@ final class LayerIIIDecoder implements FrameDecoder
 	private final float[][]		k;
 	private final int[] 		nonzero;
 	private final Bitstream 	stream;
-	private final Header 		header;
 	private final SynthesisFilter 	filter1, filter2;
 	private final Obuffer 			buffer;
 	private final int 				which_channels;
@@ -73,7 +72,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	private final int 				last_channel;
 	private final int					sfreq;
 
-	public LayerIIIDecoder(Bitstream stream0, Header header0,
+	public LayerIIIDecoder(Bitstream stream0,
 			SynthesisFilter filtera, SynthesisFilter filterb,
 			Obuffer buffer0, int which_ch0)
 	{
@@ -139,19 +138,18 @@ final class LayerIIIDecoder implements FrameDecoder
 		// END OF scalefac_buffer
 
 		stream         = stream0;
-		header         = header0;
 		filter1        = filtera;
 		filter2        = filterb;
 		buffer         = buffer0;
 		which_channels = which_ch0;
 
 		frame_start = 0;
-		channels    = (header.mode() == Header.SINGLE_CHANNEL) ? 1 : 2;
-		max_gr      = (header.version() == Header.MPEG1) ? 2 : 1;
+		channels    = (stream.mode() == Header.SINGLE_CHANNEL) ? 1 : 2;
+		max_gr      = (stream.version() == Header.MPEG1) ? 2 : 1;
 
-		sfreq       =  header.sample_frequency() +
-				((header.version() == Header.MPEG1) ? 3 :
-					(header.version() == Header.MPEG25_LSF) ? 6 : 0);	// SZD
+		sfreq       =  stream.sample_frequency() +
+				((stream.version() == Header.MPEG1) ? 3 :
+					(stream.version() == Header.MPEG25_LSF) ? 6 : 0);	// SZD
 
 		if (channels == 2)
 		{
@@ -198,18 +196,12 @@ final class LayerIIIDecoder implements FrameDecoder
 		br = new BitReserve();
 	}
 
-	// TODO - get rid of this unnecessar intermediate call
-	public void decodeFrame() throws BitstreamException
-	{
-		decode();
-	}
-
 	/**
 	 * Decode one frame, filling the buffer with the output samples.
 	 */
-	private void decode() throws BitstreamException
+	public void decodeFrame() throws JavaLayerException
 	{
-		final int nSlots = header.slots();
+		final int nSlots = stream.slots();
 		final int flush_main;
 		int gr, ch, ss, sb, sb18;
 		int main_data_end;
@@ -252,7 +244,7 @@ final class LayerIIIDecoder implements FrameDecoder
 				{
 					part2_start = br.hsstell();
 
-					if (header.version() == Header.MPEG1)
+					if (stream.version() == Header.MPEG1)
 						get_scale_factors(ch, gr);
 					else  // MPEG-2 LSF, SZD: MPEG-2.5 LSF
 						get_LSF_scale_factors(ch, gr);
@@ -318,10 +310,10 @@ final class LayerIIIDecoder implements FrameDecoder
 	 * Stereo : 256 bits (= 32 bytes)
 	 * @throws BitstreamException 
 	 */
-	private boolean get_side_info() throws BitstreamException
+	private boolean get_side_info() throws JavaLayerException
 	{
 		int ch, gr;
-		if (header.version() == Header.MPEG1)
+		if (stream.version() == Header.MPEG1)
 		{
 
 			si.main_data_begin = stream.get_bits(9);
@@ -551,7 +543,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	{
 
 		int scalefac_comp, int_scalefac_comp;
-		int mode_ext = header.mode_extension();
+		int mode_ext = stream.mode_extension();
 		int m;
 		int blocktypenumber;
 		int blocknumber = 0;
@@ -1066,14 +1058,14 @@ final class LayerIIIDecoder implements FrameDecoder
 		else 
 		{
 			gr_info_s gr_info = (si.ch[0].gr[gr]);
-			int mode_ext = header.mode_extension();
+			int mode_ext = stream.mode_extension();
 			int sfb;
 			int i;
 			int lines, temp, temp2;
 
-			final boolean ms_stereo = ((header.mode() == Header.JOINT_STEREO) && ((mode_ext & 0x2)!=0));
-			final boolean i_stereo  = ((header.mode() == Header.JOINT_STEREO) && ((mode_ext & 0x1)!=0));
-			final boolean lsf = ((header.version() == Header.MPEG2_LSF || header.version() == Header.MPEG25_LSF ));	// SZD
+			final boolean ms_stereo = ((stream.mode() == Header.JOINT_STEREO) && ((mode_ext & 0x2)!=0));
+			final boolean i_stereo  = ((stream.mode() == Header.JOINT_STEREO) && ((mode_ext & 0x1)!=0));
+			final boolean lsf = ((stream.version() == Header.MPEG2_LSF || stream.version() == Header.MPEG25_LSF ));	// SZD
 
 			final int io_type = (gr_info.scalefac_compress & 1);
 

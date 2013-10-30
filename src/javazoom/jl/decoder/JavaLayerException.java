@@ -28,12 +28,11 @@ import java.io.PrintStream;
  * exceptions thrown by JavaLayer. To facilitate conversion and 
  * common handling of exceptions from other domains, the class 
  * can delegate some functionality to a contained Throwable instance. 
- * <p> 
  * 
  * @author MDM
  */
 @SuppressWarnings("serial") 
-class JavaLayerException extends Exception
+public class JavaLayerException extends Exception
 {
 	private final Throwable	exception;
 	

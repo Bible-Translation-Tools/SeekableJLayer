@@ -32,7 +32,6 @@ package javazoom.jl.decoder;
 class LayerIDecoder implements FrameDecoder
 {
 	protected Bitstream 			stream;
-    protected Header 				header;
     private SynthesisFilter 		filter1, filter2;
     private Obuffer 				buffer;
     private int 					which_channels;
@@ -47,31 +46,30 @@ class LayerIDecoder implements FrameDecoder
 //		crc = new Crc16();
 	}
 	
-	public final void create(Bitstream stream0, Header header0,
+	public final void create(Bitstream stream0,
 		SynthesisFilter filtera, SynthesisFilter filterb,
 		Obuffer buffer0, int which_ch0)
 	{		
 	  	stream         = stream0;
-	  	header         = header0;
 	  	filter1        = filtera;
 	  	filter2        = filterb;
 	  	buffer         = buffer0;
 	  	which_channels = which_ch0;
 	}
 	
-	public void decodeFrame() throws DecoderException, BitstreamException
+	public void decodeFrame() throws JavaLayerException
 	{
 		
-		num_subbands = header.number_of_subbands();
+		num_subbands = stream.number_of_subbands();
 		subbands = new Subband[32];
-		mode = header.mode();
+		mode = stream.mode();
 		
 		createSubbands();
 		
 		readAllocation();
 		readScaleFactorSelection();
 		
-	    if ((crc == null) || header.checksum_ok())
+	    if ((crc == null) || stream.checksum_ok())
   		{
 			readScaleFactors();
 			readSampleData();			
@@ -87,7 +85,7 @@ class LayerIDecoder implements FrameDecoder
   		    subbands[i] = new SubbandLayer1(i);
   		else if (mode == Header.JOINT_STEREO)
 		{
-  		  for (i = 0; i < header.intensity_stereo_bound(); ++i)
+  		  for (i = 0; i < stream.intensity_stereo_bound(); ++i)
   		    subbands[i] = new SubbandLayer1Stereo(i);
   		  for (; i < num_subbands; ++i)
   		    subbands[i] = new SubbandLayer1IntensityStereo(i);
@@ -99,30 +97,30 @@ class LayerIDecoder implements FrameDecoder
   	    }		
 	}
 	
-	private final void readAllocation() throws DecoderException, BitstreamException
+	private final void readAllocation() throws JavaLayerException
 	{
 		// start to read audio data:
   	    for (int i = 0; i < num_subbands; ++i)
-  	      subbands[i].read_allocation(stream, header, crc);
+  	      subbands[i].read_allocation(stream, crc);
 		
 	}
 
-	protected void readScaleFactorSelection() throws BitstreamException
+	protected void readScaleFactorSelection() throws JavaLayerException
 	{
 		// scale factor selection not present for layer I. 
 	}
 	
-	private final void readScaleFactors() throws BitstreamException
+	private final void readScaleFactors() throws JavaLayerException
 	{
 		for (int i = 0; i < num_subbands; ++i)
-  		  subbands[i].read_scalefactor(stream, header);  		
+  		  subbands[i].read_scalefactor(stream);  		
 	}
 	
-	private final void readSampleData() throws BitstreamException
+	private final void readSampleData() throws JavaLayerException
 	{
 		boolean read_ready = false;
 		boolean write_ready = false;
-		int mode = header.mode();
+		int mode = stream.mode();
 		int i;
 		do
   		{
@@ -172,9 +170,9 @@ class LayerIDecoder implements FrameDecoder
 	  0.00000190734863f, 0.00000151386361f, 0.00000120155435f, 0.00000000000000f /* illegal scalefactor */
 	  };
 
-	  public abstract void read_allocation (Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException;
-	  public abstract void read_scalefactor (Bitstream stream, Header header) throws BitstreamException;
-	  public abstract boolean read_sampledata (Bitstream stream) throws BitstreamException;
+	  public abstract void read_allocation (Bitstream stream, Crc16 crc) throws JavaLayerException;
+	  public abstract void read_scalefactor (Bitstream stream) throws JavaLayerException;
+	  public abstract boolean read_sampledata (Bitstream stream) throws JavaLayerException;
 	  public abstract boolean put_next_sample (int channels, SynthesisFilter filter1, SynthesisFilter filter2);
 	};
 	
@@ -231,12 +229,12 @@ class LayerIDecoder implements FrameDecoder
 	  /**
 	   * @throws BitstreamException 
 	   */
-	  public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException
+	  public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
 	  {
 	    if ((allocation = stream.get_bits (4)) == 15) 
 	    {
 	    	// CGJ: catch this condition and throw appropriate exception
-	    	throw new DecoderException(DecoderErrors.ILLEGAL_SUBBAND_ALLOCATION, null);    	
+	    	throw new IllegalSubbandAllocation();    	
 	    	//	 cerr << "WARNING: stream contains an illegal allocation!\n";
 			// MPEG-stream is corrupted!
 	    }
@@ -254,7 +252,7 @@ class LayerIDecoder implements FrameDecoder
 	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
+	  public void read_scalefactor(Bitstream stream) throws JavaLayerException
 	  {
 	    if (allocation != 0) scalefactor = scalefactors[stream.get_bits(6)];
 	  }
@@ -262,7 +260,7 @@ class LayerIDecoder implements FrameDecoder
 	  /**
 	   * @throws BitstreamException 
 	   */
-	  public boolean read_sampledata(Bitstream stream) throws BitstreamException
+	  public boolean read_sampledata(Bitstream stream) throws JavaLayerException
 	  {
 	    if (allocation != 0)
 	    {
@@ -306,15 +304,15 @@ class LayerIDecoder implements FrameDecoder
 	 * @throws BitstreamException 
 	   *
 	   */
-	  public void read_allocation(Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException
+	  public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
 	  {
-	    super.read_allocation (stream, header, crc);
+	    super.read_allocation (stream, crc);
 	  }
 	  
 	  /**
 	   * @throws BitstreamException 
 	   */
-	  public void read_scalefactor (Bitstream stream, Header header) throws BitstreamException
+	  public void read_scalefactor (Bitstream stream, Header header) throws JavaLayerException
 	  {
 	    if (allocation != 0)
 	    {
@@ -327,7 +325,7 @@ class LayerIDecoder implements FrameDecoder
 	 * @throws BitstreamException 
 	   *
 	   */
-	  public boolean read_sampledata(Bitstream stream) throws BitstreamException
+	  public boolean read_sampledata(Bitstream stream) throws JavaLayerException
 	  {
 	  	 return super.read_sampledata (stream);
 	  }
@@ -384,7 +382,7 @@ class LayerIDecoder implements FrameDecoder
 	   * If such a value occurs... the problem is mainly... what to do about it ? 
 	   * Assume it is some other 
 	   */
-	  public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws DecoderException, BitstreamException
+	  public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws JavaLayerException
 	  {
 	 	 allocation = stream.get_bits(4);
 	     channel2_allocation = stream.get_bits(4);
@@ -407,13 +405,13 @@ class LayerIDecoder implements FrameDecoder
 	     }
 	  }
 	  
-	  public void read_scalefactor(Bitstream stream, Header header) throws BitstreamException
+	  public void read_scalefactor(Bitstream stream) throws JavaLayerException
 	  {
 	    if (allocation != 0) scalefactor = scalefactors[stream.get_bits(6)];
 	    if (channel2_allocation != 0) channel2_scalefactor = scalefactors[stream.get_bits(6)];
 	  }
 
-	  public boolean read_sampledata (Bitstream stream) throws BitstreamException
+	  public boolean read_sampledata (Bitstream stream) throws JavaLayerException
 	  {
 	     boolean returnvalue = super.read_sampledata(stream);
 	     if (channel2_allocation != 0)

@@ -33,7 +33,7 @@ interface FrameDecoder
 	 * Decodes one frame of MPEG audio. 
 	 * @throws BitstreamException 
 	 */
-	public void decodeFrame() throws DecoderException, BitstreamException;
+	public void decodeFrame() throws JavaLayerException;
 	/**
 	 * WVB - Notifies the decoder that the inputstream has been seeked. 
 	 * For Layer 3, the bitreservoir must be cleared then.

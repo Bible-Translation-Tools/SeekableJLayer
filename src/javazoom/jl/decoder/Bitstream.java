@@ -35,6 +35,7 @@
 
 package javazoom.jl.decoder;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -47,7 +48,7 @@ import java.io.InputStream;
  * various decoders. This should be moved into this class and associated
  * inner classes.
  */
-public final class Bitstream implements BitstreamErrors
+public final class Bitstream extends Header
 {
 	/**
 	 * Synchronization control constant for the initial
@@ -113,8 +114,6 @@ public final class Bitstream implements BitstreamErrors
 			0x0001FFFF };
 
 	private final RandomAccessStream source;
-
-	private final Header			header = new Header();
 
 	private final byte				syncbuf[] = new byte[4];
 
@@ -208,84 +207,71 @@ public final class Bitstream implements BitstreamErrors
 	 * Close the Bitstream.
 	 * @throws BitstreamException
 	 */
-	public void close() throws BitstreamException
+	public void close() throws IOException
 	{
-		try
-		{
-			source.close();
-		}
-		catch (IOException ex)
-		{
-			throw newBitstreamException(STREAM_ERROR, ex);
-		}
+		source.close();
 	}
 
 	/**
 	 * Reads and parses the next frame from the input source.
 	 * @return the Header describing details of the frame read,
 	 *	or null if the end of the stream has been reached.
+	 * @throws EOFException 
 	 */
-	public Header readFrame() throws BitstreamException
+	public void readFrame() throws JavaLayerException
 	{
-		Header result = null;
 		try
 		{
-			result = readNextFrame();
+			readNextFrame();
 			// E.B, Parse VBR (if any) first frame.
 			if (firstframe == true)
 			{
-				result.parseVBR(frame_bytes);
+				parseVBR(frame_bytes);
 				firstframe = false;
-			}			
+			}
 		}
-		catch (BitstreamException ex)
+		catch (InvalidFrame e)
 		{
-			if ((ex.getErrorCode()==INVALIDFRAME))
+			closeFrame();
+			// Try to skip this frame.
+			try
 			{
-				// Try to skip this frame.
-				try
-				{
-					closeFrame();
-					result = readNextFrame();
-				}
-				catch (BitstreamException e)
-				{
-					if ((e.getErrorCode()!=STREAM_EOF))
-					{
-						// wrap original exception so stack trace is maintained.
-						throw newBitstreamException(e.getErrorCode(), e);
-					}
-				}
+				readNextFrame();
 			}
-			else if ((ex.getErrorCode()!=STREAM_EOF))
+			catch (JavaLayerException e2)
 			{
-				// wrap original exception so stack trace is maintained.
-				throw newBitstreamException(ex.getErrorCode(), ex);
+				closeFrame();
+				throw e;
 			}
 		}
-		return result;
+		catch (JavaLayerException e)
+		{
+			closeFrame();
+			throw e;
+		}
 	}
 
 	/**
 	 * Read next MP3 frame.
 	 * @return MP3 frame header.
 	 * @throws BitstreamException
+	 * @throws EOFException 
 	 */
-	private Header readNextFrame() throws BitstreamException
+	private void readNextFrame() throws JavaLayerException
 	{
 		if (framesize == -1)
 			nextFrame();
-		return header;
 	}
 
 	/**
 	 * Read next MP3 frame.
 	 * @throws BitstreamException
+	 * @throws EOFException 
 	 */
-	private void nextFrame() throws BitstreamException
+	private void nextFrame() throws JavaLayerException
 	{
 		// entire frame is read by the header class.
-		header.read_header(this, crc);
+		read_header(this, crc);
 	}
 
 	/**
@@ -295,7 +281,7 @@ public final class Bitstream implements BitstreamErrors
 	 * @throws BitstreamException
 	 */
 	// REVIEW: add new error codes for this.
-	void unreadFrame() throws BitstreamException
+	void unreadFrame()
 	{
 		if (wordpointer==-1 && bitindex==-1 && (framesize>0))
 		{
@@ -317,7 +303,7 @@ public final class Bitstream implements BitstreamErrors
 	 * Determines if the next 4 bytes of the stream represent a
 	 * frame header.
 	 */
-	boolean isSyncCurrentPosition(int syncmode) throws BitstreamException
+	boolean isSyncCurrentPosition(int syncmode) throws JavaLayerException
 	{
 		int read = readBytes(syncbuf, 0, 4);
 		int headerstring = ((syncbuf[0] << 24) & 0xFF000000) | ((syncbuf[1] << 16) & 0x00FF0000) | ((syncbuf[2] << 8) & 0x0000FF00) | ((syncbuf[3] << 0) & 0x000000FF);
@@ -327,30 +313,21 @@ public final class Bitstream implements BitstreamErrors
 		else return read==0;
 	}	
 
-	protected BitstreamException newBitstreamException(int errorcode)
-	{
-		return new BitstreamException(errorcode, null);
-	}
-
-	private BitstreamException newBitstreamException(int errorcode, Throwable throwable)
-	{
-		return new BitstreamException(errorcode, throwable);
-	}
-
 	/**
 	 * Get next 32 bits from bitstream.
 	 * They are stored in the headerstring.
 	 * syncmod allows Synchro flag ID
 	 * The returned value is False at the end of stream.
+	 * @throws BitStreamEOF 
 	 */
-	int syncHeader(byte syncmode) throws BitstreamException
+	int syncHeader(byte syncmode) throws JavaLayerException
 	{
 		boolean sync;
 		int headerstring;
 		// read additional 2 bytes
 		int bytesRead = readBytes(syncbuf, 0, 3);
 
-		if (bytesRead!=3) throw newBitstreamException(STREAM_EOF, null);
+		if (bytesRead!=3) throw new BitStreamEOF();
 
 		headerstring = ((syncbuf[0] << 16) & 0x00FF0000) | ((syncbuf[1] << 8) & 0x0000FF00) | ((syncbuf[2] << 0) & 0x000000FF);
 
@@ -359,7 +336,7 @@ public final class Bitstream implements BitstreamErrors
 			headerstring <<= 8;
 
 			if (readBytes(syncbuf, 3, 1)!=1)
-				throw newBitstreamException(STREAM_EOF, null);
+				throw new BitStreamEOF();
 
 			headerstring |= (syncbuf[3] & 0x000000FF);
 
@@ -400,7 +377,7 @@ public final class Bitstream implements BitstreamErrors
 	 * Reads the data for the next frame. The frame is not parsed
 	 * until parse frame is called.
 	 */
-	int read_frame_data(int bytesize) throws BitstreamException
+	int read_frame_data(int bytesize) throws JavaLayerException
 	{
 		int	numread = 0;
 		numread = readFully(frame_bytes, 0, bytesize);
@@ -413,7 +390,7 @@ public final class Bitstream implements BitstreamErrors
 	/**
 	 * Parses the data previously read with read_frame_data().
 	 */
-	void parse_frame() throws BitstreamException
+	void parse_frame() throws JavaLayerException
 	{
 		// Convert Bytes read to int
 		int	b=0;
@@ -442,7 +419,7 @@ public final class Bitstream implements BitstreamErrors
 	 * (1 <= number_of_bits <= 16)
 	 * @throws BitstreamException 
 	 */
-	int get_bits(int number_of_bits) throws BitstreamException
+	int get_bits(int number_of_bits) throws JavaLayerException
 	{
 		int				returnvalue = 0;
 		int 			sum = bitindex + number_of_bits;
@@ -455,14 +432,7 @@ public final class Bitstream implements BitstreamErrors
 		if (sum <= 32)
 		{
 			// all bits contained in *wordpointer
-			try
-			{
-				returnvalue = (framebuffer[wordpointer] >>> (32 - sum)) & bitmask[number_of_bits];
-			}
-			catch (ArrayIndexOutOfBoundsException e)
-			{
-				throw new BitstreamException("WVB- damn nullpointers", e);
-			}
+			returnvalue = (framebuffer[wordpointer] >>> (32 - sum)) & bitmask[number_of_bits];
 			// returnvalue = (wordpointer[0] >> (32 - sum)) & bitmask[number_of_bits];
 			if ((bitindex += number_of_bits) == 32)
 			{
@@ -509,7 +479,7 @@ public final class Bitstream implements BitstreamErrors
 	 * @exception BitstreamException is thrown if the specified
 	 *		number of bytes could not be read from the stream.
 	 */
-	private int readFully(byte[] b, int offs, int len) throws BitstreamException
+	private int readFully(byte[] b, int offs, int len) throws JavaLayerException
 	{		
 		int nRead = 0;
 		try
@@ -531,7 +501,7 @@ public final class Bitstream implements BitstreamErrors
 		}
 		catch (IOException ex)
 		{
-			throw newBitstreamException(STREAM_ERROR, ex);
+			throw new BitStreamError(ex);
 		}
 		return nRead;
 	}
@@ -541,7 +511,7 @@ public final class Bitstream implements BitstreamErrors
 	 * EOF is reached.
 	 * TODO - get rid of this intermediate one and move it to the randomaccessstream.
 	 */
-	private int readBytes(byte[] b, int offs, int len) throws BitstreamException
+	private int readBytes(byte[] b, int offs, int len) throws JavaLayerException
 	{
 		int totalBytesRead = 0;
 		try
@@ -557,7 +527,7 @@ public final class Bitstream implements BitstreamErrors
 		}
 		catch (IOException ex)
 		{
-			throw newBitstreamException(STREAM_ERROR, ex);
+			throw new BitStreamError(ex);
 		}
 		return totalBytesRead;
 	}
