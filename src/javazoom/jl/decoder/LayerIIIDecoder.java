@@ -198,6 +198,7 @@ final class LayerIIIDecoder implements FrameDecoder
 		br = new BitReserve();
 	}
 
+	// TODO - get rid of this unnecessar intermediate call
 	public void decodeFrame() throws BitstreamException
 	{
 		decode();

@@ -55,17 +55,15 @@ public final class Header
 	 * Constant for MPEG-1 version
 	 */
 	static final int		MPEG1 = 1;
+	private static final int	STEREO = 0;
+	static final int			JOINT_STEREO = 1;
+	private static final int	DUAL_CHANNEL = 2;
+	static final int			SINGLE_CHANNEL = 3;
+	private static final int	FOURTYFOUR_POINT_ONE = 0;
+	private static final int	FOURTYEIGHT=1;
+	private static final int	THIRTYTWO=2;
 
-	private static final int		STEREO = 0;
-	static final int		JOINT_STEREO = 1;
-	private static final int		DUAL_CHANNEL = 2;
-	static final int		SINGLE_CHANNEL = 3;
-	private static final int		FOURTYFOUR_POINT_ONE = 0;
-	private static final int		FOURTYEIGHT=1;
-	private static final int		THIRTYTWO=2;
-
-	private int				h_layer, h_protection_bit, h_bitrate_index,
-	h_padding_bit, h_mode_extension;
+	private int				h_layer, h_protection_bit, h_bitrate_index,h_padding_bit, h_mode_extension;
 	private int				h_version;
 	private int				h_mode;
 	private int				h_sample_frequency;
@@ -402,27 +400,16 @@ public final class Header
 
 	// E.B -> private to public
 	private static final int bitrates[][][] = {
-		{{0 /*free format*/, 32000, 48000, 56000, 64000, 80000, 96000,
-			112000, 128000, 144000, 160000, 176000, 192000 ,224000, 256000, 0},
-			{0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000,
-				56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0},
-				{0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000,
-					56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0}},
-
-					{{0 /*free format*/, 32000, 64000, 96000, 128000, 160000, 192000,
-						224000, 256000, 288000, 320000, 352000, 384000, 416000, 448000, 0},
-						{0 /*free format*/, 32000, 48000, 56000, 64000, 80000, 96000,
-							112000, 128000, 160000, 192000, 224000, 256000, 320000, 384000, 0},
-							{0 /*free format*/, 32000, 40000, 48000, 56000, 64000, 80000,
-								96000, 112000, 128000, 160000, 192000, 224000, 256000, 320000, 0}},
-								// SZD: MPEG2.5
-								{{0 /*free format*/, 32000, 48000, 56000, 64000, 80000, 96000,
-									112000, 128000, 144000, 160000, 176000, 192000 ,224000, 256000, 0},
-									{0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000,
-										56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0},
-										{0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000,
-											56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0}},
-
+		{{0 /*free format*/, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 176000, 192000 ,224000, 256000, 0},
+		 {0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0},
+		 {0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000,56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0}},
+		{{0 /*free format*/, 32000, 64000, 96000, 128000, 160000, 192000,224000, 256000, 288000, 320000, 352000, 384000, 416000, 448000, 0},
+		 {0 /*free format*/, 32000, 48000, 56000, 64000, 80000, 96000,112000, 128000, 160000, 192000, 224000, 256000, 320000, 384000, 0},
+		 {0 /*free format*/, 32000, 40000, 48000, 56000, 64000, 80000,96000, 112000, 128000, 160000, 192000, 224000, 256000, 320000, 0}},
+		// SZD: MPEG2.5
+		{{0 /*free format*/, 32000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 176000, 192000 ,224000, 256000, 0},
+		 {0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0},
+		 {0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0}},
 	};
 
 	// E.B -> private to public
@@ -460,7 +447,7 @@ public final class Header
 				{  // MPEG-2 LSF, SZD: MPEG-2.5 LSF
 					nSlots = framesize - ((h_mode == SINGLE_CHANNEL) ?  9 : 17) // side info size
 							-  ((h_protection_bit!=0) ? 0 : 2) 		       // CRC size
-							- 4; 								             // header size
+							- 4;								             // header size
 				}
 			}
 			else

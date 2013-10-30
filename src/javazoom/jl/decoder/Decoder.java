@@ -139,7 +139,7 @@ public class Decoder implements DecoderErrors
 		case 3:
 			if (l3decoder==null)
 			{
-				l3decoder = new LayerIIIDecoder(stream, header, filter1, filter2,output, channelChoice);
+				l3decoder = new LayerIIIDecoder(stream, header, filter1, filter2, output, channelChoice);
 			}
 			return l3decoder;
 		case 2:

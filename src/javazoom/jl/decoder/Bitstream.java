@@ -135,9 +135,7 @@ public final class Bitstream implements BitstreamErrors
 	public Bitstream(RandomAccessStream in)
 	{
 		source = in;
-		loadID3v2(source);
-		firstframe = true;
-		closeFrame();
+		reset();
 	}
 
 	/**
@@ -152,10 +150,11 @@ public final class Bitstream implements BitstreamErrors
 		{
 			// Read ID3v2 header (10 bytes).
 			in.mark(10);			
-			size = readID3v2Header(in);			
+			size = readID3v2Header(in);
 		}
 		catch (IOException e)
 		{}
+		
 		finally
 		{
 			try
@@ -561,5 +560,12 @@ public final class Bitstream implements BitstreamErrors
 			throw newBitstreamException(STREAM_ERROR, ex);
 		}
 		return totalBytesRead;
+	}
+
+	public void reset() 
+	{
+		loadID3v2(source);
+		firstframe = true;
+		closeFrame();
 	}
 }
