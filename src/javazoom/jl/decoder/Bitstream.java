@@ -205,7 +205,7 @@ public final class Bitstream extends Header
 
 	/**
 	 * Close the Bitstream.
-	 * @throws BitstreamException
+	 * @throws IOException
 	 */
 	public void close() throws IOException
 	{
@@ -254,7 +254,7 @@ public final class Bitstream extends Header
 	/**
 	 * Read next MP3 frame.
 	 * @return MP3 frame header.
-	 * @throws BitstreamException
+	 * @throws JavaLayerException
 	 * @throws EOFException 
 	 */
 	private void readNextFrame() throws JavaLayerException
@@ -265,7 +265,7 @@ public final class Bitstream extends Header
 
 	/**
 	 * Read next MP3 frame.
-	 * @throws BitstreamException
+	 * @throws JavaLayerException
 	 * @throws EOFException 
 	 */
 	private void nextFrame() throws JavaLayerException
@@ -277,8 +277,6 @@ public final class Bitstream extends Header
 	/**
 	 * Unreads the bytes read from the frame.
 	 * WVB - This is also crap since we had a buffered stream already. There is thus no need to unread specific data.
-	 * 
-	 * @throws BitstreamException
 	 */
 	// REVIEW: add new error codes for this.
 	void unreadFrame()
@@ -417,7 +415,7 @@ public final class Bitstream extends Header
 	 * Read bits from buffer into the lower bits of an unsigned int.
 	 * The LSB contains the latest read bit of the stream.
 	 * (1 <= number_of_bits <= 16)
-	 * @throws BitstreamException 
+	 * @throws JavaLayerException
 	 */
 	int get_bits(int number_of_bits) throws JavaLayerException
 	{
@@ -476,7 +474,7 @@ public final class Bitstream extends Header
 	 *				read should be stored.
 	 * @param len	the number of bytes to read.
 	 *
-	 * @exception BitstreamException is thrown if the specified
+	 * @exception JavaLayerException is thrown if the specified
 	 *		number of bytes could not be read from the stream.
 	 */
 	private int readFully(byte[] b, int offs, int len) throws JavaLayerException

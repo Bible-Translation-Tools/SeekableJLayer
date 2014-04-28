@@ -56,13 +56,15 @@ final class SynthesisFilter
 	private int 		  actual_write_pos;	   		// 0-15
 	final float[]		  samples  = new float[32];	// 32 new input subband samples
 	private final int	  channel;
+    private final boolean spectralContent;
 
-	public SynthesisFilter(int channelnumber)
+    public SynthesisFilter(int channelnumber, boolean spectralContent)
 	{  	 
 		d16 = splitArray(Sfd.SFD, 16);
 		v1 = new float[512];
 		v2 = new float[512];
 		channel = channelnumber;
+        this.spectralContent=spectralContent;
 		reset();
 	}
 
@@ -322,7 +324,6 @@ final class SynthesisFilter
 		p14 = pp14 + pp15;
 		p15 = (pp14 - pp15) * cos1_4;
 
-
 		// manually doing something that a compiler should handle sucks
 		// coding like this is hard to read
 		float tmp2;
@@ -440,7 +441,7 @@ final class SynthesisFilter
 		{
 			float pcm_sample;
 			final D16 dp = d16[i];
-			pcm_sample = (float)(((vp[0 + dvp] * dp.d0) +
+			pcm_sample = ((vp[0 + dvp] * dp.d0) +
 					(vp[15 + dvp] * dp.d1) +
 					(vp[14 + dvp] * dp.d2) +
 					(vp[13 + dvp] * dp.d3) +
@@ -456,7 +457,7 @@ final class SynthesisFilter
 					(vp[3 + dvp] * dp.d13) +
 					(vp[2 + dvp] * dp.d14) +
 					(vp[1 + dvp] * dp.d15)
-					) );
+					);
 			tmpOut[i] = pcm_sample;
 			dvp += 16;
 		} // for
@@ -511,7 +512,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[2 + dvp] * dp.d0) +
+			pcm_sample = ((vp[2 + dvp] * dp.d0) +
 					(vp[1 + dvp] * dp.d1) +
 					(vp[0 + dvp] * dp.d2) +
 					(vp[15 + dvp] * dp.d3) +
@@ -527,7 +528,7 @@ final class SynthesisFilter
 					(vp[5 + dvp] * dp.d13) +
 					(vp[4 + dvp] * dp.d14) +
 					(vp[3 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -548,7 +549,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[3 + dvp] * dp.d0) +
+			pcm_sample = ((vp[3 + dvp] * dp.d0) +
 					(vp[2 + dvp] * dp.d1) +
 					(vp[1 + dvp] * dp.d2) +
 					(vp[0 + dvp] * dp.d3) +
@@ -564,7 +565,7 @@ final class SynthesisFilter
 					(vp[6 + dvp] * dp.d13) +
 					(vp[5 + dvp] * dp.d14) +
 					(vp[4 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -585,7 +586,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[4 + dvp] * dp.d0) +
+			pcm_sample = ((vp[4 + dvp] * dp.d0) +
 					(vp[3 + dvp] * dp.d1) +
 					(vp[2 + dvp] * dp.d2) +
 					(vp[1 + dvp] * dp.d3) +
@@ -601,7 +602,7 @@ final class SynthesisFilter
 					(vp[7 + dvp] * dp.d13) +
 					(vp[6 + dvp] * dp.d14) +
 					(vp[5 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -622,7 +623,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[5 + dvp] * dp.d0) +
+			pcm_sample = ((vp[5 + dvp] * dp.d0) +
 					(vp[4 + dvp] * dp.d1) +
 					(vp[3 + dvp] * dp.d2) +
 					(vp[2 + dvp] * dp.d3) +
@@ -638,7 +639,7 @@ final class SynthesisFilter
 					(vp[8 + dvp] * dp.d13) +
 					(vp[7 + dvp] * dp.d14) +
 					(vp[6 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -658,7 +659,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[6 + dvp] * dp.d0) +
+			pcm_sample = ((vp[6 + dvp] * dp.d0) +
 					(vp[5 + dvp] * dp.d1) +
 					(vp[4 + dvp] * dp.d2) +
 					(vp[3 + dvp] * dp.d3) +
@@ -674,7 +675,7 @@ final class SynthesisFilter
 					(vp[9 + dvp] * dp.d13) +
 					(vp[8 + dvp] * dp.d14) +
 					(vp[7 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -695,7 +696,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[7 + dvp] * dp.d0) +
+			pcm_sample = ((vp[7 + dvp] * dp.d0) +
 					(vp[6 + dvp] * dp.d1) +
 					(vp[5 + dvp] * dp.d2) +
 					(vp[4 + dvp] * dp.d3) +
@@ -711,7 +712,7 @@ final class SynthesisFilter
 					(vp[10 + dvp] * dp.d13) +
 					(vp[9 + dvp] * dp.d14) +
 					(vp[8 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -732,7 +733,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[8 + dvp] * dp.d0) +
+			pcm_sample = ((vp[8 + dvp] * dp.d0) +
 					(vp[7 + dvp] * dp.d1) +
 					(vp[6 + dvp] * dp.d2) +
 					(vp[5 + dvp] * dp.d3) +
@@ -748,7 +749,7 @@ final class SynthesisFilter
 					(vp[11 + dvp] * dp.d13) +
 					(vp[10 + dvp] * dp.d14) +
 					(vp[9 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -769,7 +770,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[9 + dvp] * dp.d0) +
+			pcm_sample = ((vp[9 + dvp] * dp.d0) +
 					(vp[8 + dvp] * dp.d1) +
 					(vp[7 + dvp] * dp.d2) +
 					(vp[6 + dvp] * dp.d3) +
@@ -785,7 +786,7 @@ final class SynthesisFilter
 					(vp[12 + dvp] * dp.d13) +
 					(vp[11 + dvp] * dp.d14) +
 					(vp[10 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -805,7 +806,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[10 + dvp] * dp.d0) +
+			pcm_sample = ((vp[10 + dvp] * dp.d0) +
 					(vp[9 + dvp] * dp.d1) +
 					(vp[8 + dvp] * dp.d2) +
 					(vp[7 + dvp] * dp.d3) +
@@ -821,7 +822,7 @@ final class SynthesisFilter
 					(vp[13 + dvp] * dp.d13) +
 					(vp[12 + dvp] * dp.d14) +
 					(vp[11 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -842,7 +843,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[11 + dvp] * dp.d0) +
+			pcm_sample = ((vp[11 + dvp] * dp.d0) +
 					(vp[10 + dvp] * dp.d1) +
 					(vp[9 + dvp] * dp.d2) +
 					(vp[8 + dvp] * dp.d3) +
@@ -858,7 +859,7 @@ final class SynthesisFilter
 					(vp[14 + dvp] * dp.d13) +
 					(vp[13 + dvp] * dp.d14) +
 					(vp[12 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -878,7 +879,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[12 + dvp] * dp.d0) +
+			pcm_sample = ((vp[12 + dvp] * dp.d0) +
 					(vp[11 + dvp] * dp.d1) +
 					(vp[10 + dvp] * dp.d2) +
 					(vp[9 + dvp] * dp.d3) +
@@ -894,7 +895,7 @@ final class SynthesisFilter
 					(vp[15 + dvp] * dp.d13) +
 					(vp[14 + dvp] * dp.d14) +
 					(vp[13 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -915,7 +916,7 @@ final class SynthesisFilter
 			final D16 dp = d16[i];
 			float pcm_sample;
 
-			pcm_sample = (float)(((vp[13 + dvp] * dp.d0) +
+			pcm_sample = ((vp[13 + dvp] * dp.d0) +
 					(vp[12 + dvp] * dp.d1) +
 					(vp[11 + dvp] * dp.d2) +
 					(vp[10 + dvp] * dp.d3) +
@@ -931,7 +932,7 @@ final class SynthesisFilter
 					(vp[0 + dvp] * dp.d13) +
 					(vp[15 + dvp] * dp.d14) +
 					(vp[14 + dvp] * dp.d15)
-					) );
+					);
 
 			tmpOut[i] = pcm_sample;
 
@@ -1068,11 +1069,17 @@ final class SynthesisFilter
 	 */
 	public void calculate_pcm_samples_layer_iii(Obuffer buffer)
 	{
-		compute_new_v();	
-		compute_pcm_samples(buffer);
-
-		actual_write_pos = (actual_write_pos + 1) & 0xf;
-		actual_v = (actual_v == v1) ? v2 : v1;
+        if (spectralContent)
+        {
+            buffer.appendSamples(channel,samples);
+        }
+        else
+        {
+            compute_new_v();
+            compute_pcm_samples(buffer);
+            actual_write_pos = (actual_write_pos + 1) & 0xf;
+            actual_v = (actual_v == v1) ? v2 : v1;
+        }
 	}
 
 	public void calculate_pcm_samples_layer_i_ii(Obuffer buffer)
@@ -1083,7 +1090,6 @@ final class SynthesisFilter
 		for (int p=0;p<32;p++) 
 			samples[p] = 0.0f;
 	}
-
 
 	private static final double MY_PI = 3.14159265358979323846;
 	private static final float cos1_64  =(float) (1.0 / (2.0 * Math.cos(MY_PI        / 64.0)));

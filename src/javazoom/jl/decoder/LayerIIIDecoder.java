@@ -308,7 +308,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	 * frame has been read already.
 	 * Mono   : 136 bits (= 17 bytes)
 	 * Stereo : 256 bits (= 32 bytes)
-	 * @throws BitstreamException 
+	 * @throws JavaLayerException
 	 */
 	private boolean get_side_info() throws JavaLayerException
 	{
