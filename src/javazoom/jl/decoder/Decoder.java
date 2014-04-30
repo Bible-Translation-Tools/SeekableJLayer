@@ -164,7 +164,7 @@ public class Decoder
 
 		// set up output buffer if not set up by client.
 		if (output == null)
-			output = new SampleBuffer(header.frequency(), channels);
+			output = new SampleBuffer(channels);
 
 		filter1 = new SynthesisFilter(0,spectralContent);
 

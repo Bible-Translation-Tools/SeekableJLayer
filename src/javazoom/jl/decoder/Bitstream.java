@@ -419,8 +419,8 @@ public final class Bitstream extends Header
 	 */
 	int get_bits(int number_of_bits) throws JavaLayerException
 	{
-		int				returnvalue = 0;
-		int 			sum = bitindex + number_of_bits;
+		int	returnvalue;
+		int sum = bitindex + number_of_bits;
 
 		// E.B
 		// There is a problem here, wordpointer could be -1 ?!

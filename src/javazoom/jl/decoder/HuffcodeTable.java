@@ -1,4 +1,6 @@
 /*
+ * 30/04/14 converted the lookuptable to an explicit tree. Speeds up decoding somewhat
+ *          (werner@yellowcouch.org)
  * 11/19/04 1.0 moved to LGPL.
  * 16/11/99 Renamed class, added javadoc, and changed table
  *			name from String to 3 chars. mdm@techie.com
@@ -38,6 +40,25 @@
  */
 package javazoom.jl.decoder;
 
+final class IntermediateNode
+{
+    int left;
+    int right;
+    public IntermediateNode(int car, int cdr)
+    {
+        left=car;
+        right=cdr;
+    }
+}
+
+final class Node
+{
+    int rightMsn; // Most significant nibble (in the byte)
+    int rightLsn;
+    public Node finalRight;
+    public Node finalLeft;
+}
+
 /**
  * Class to implements Huffman decoder.
  */
@@ -47,16 +68,11 @@ final class HuffcodeTable
 	private static final int HTN=34;
 	private final boolean quadrupple;
 	private final int	  xlast; 	
-	private final int	  ylast;	
-	private final int	  linbits; 	 // number of linbits   	                  
-	private final int[][] val;		 // decoder tree		    	              
-	private final int 	  treelen;	 // length of decoder tree  	
+	private final int	  ylast;
+    private final Node    root;
+	private final int	  linbits; 	 // number of linbits
 
-	private static final int VAL_TAB_DUMMY[][] = {
-		{0,0}	// dummy
-	};
-
-	private static final int VAL_TAB_1[][] = {
+    private static final int VAL_TAB_1[][] = {
 		{2,1},{0,0},{2,1},{0,16},{2,1},{0,1},{0,17},
 	};
 
@@ -402,17 +418,65 @@ final class HuffcodeTable
 	public final static HuffcodeTable[] HT = new HuffcodeTable[HTN];
 
 	/**
-	 * Big Constructor : Computes all Huffman Tables.
+	 * Computes all Huffman Tables.
 	 */
-	private HuffcodeTable(boolean q, int XLEN, int YLEN, int LINBITS, int REF, int[] TABLE, int[] HLEN, int[][] VAL, int TREELEN)                     
-	{
-		quadrupple=q;
-		xlast = XLEN-1;
-		ylast = YLEN-1;
-		linbits = LINBITS;
-		val = VAL;
-		treelen = TREELEN;
-	}
+    private HuffcodeTable(boolean q, int XLEN, int YLEN, int LINBITS, int[][] heap, int treelen)
+    {
+        quadrupple=q;
+        xlast = XLEN-1;
+        ylast = YLEN-1;
+        linbits = LINBITS;
+
+        if (heap==null)
+        {
+            root=null;
+            return;
+        }
+
+        final IntermediateNode[] nodes= new IntermediateNode[heap.length];
+        final Node[] finalNodes= new Node[heap.length];
+
+        for(int i = 0 ; i < heap.length; i++)
+        {
+            nodes[i]=new IntermediateNode(heap[i][0],heap[i][1]);
+            finalNodes[i]=new Node();
+        }
+
+        // Link 'm together so that we can traverse them faster during the huffman_decoder routine.
+        for(int i = 0 ; i < nodes.length; i++)
+        {
+            IntermediateNode intermediate=nodes[i];
+            Node node=finalNodes[i];
+            if (intermediate.left>0)
+            {
+                // follow the final target of this node
+                int point=i;
+                while(nodes[point].left>=MXOFF) point+=nodes[point].left;
+                point+=nodes[point].left;
+                node.finalLeft=finalNodes[point];
+            }
+            else
+            {
+                node.rightLsn=intermediate.right&0xf;
+                node.rightMsn=(intermediate.right>>>4);
+            }
+            if (intermediate.right>0)
+            {
+                int point=i;
+                while(point<nodes.length && nodes[point].right>=MXOFF) point+=nodes[point].right;
+                if (point>=nodes.length) continue;
+                point+=nodes[point].right;
+                // TODO - check whether the tables are correct.
+                // I do not understand how it is possible that there are references outside the tree.
+                // In table 24 there is such an entry. It might be that the treelength check that is omitted
+                // is related to this. Don't know. Or it might never occur because of the level depth.
+                if(point>=finalNodes.length) continue;
+                node.finalRight=finalNodes[point];
+            }
+        }
+
+        root=finalNodes[0];
+   }
 
 	/**
 	 * A class to transfer data to the calling function.
@@ -423,58 +487,49 @@ final class HuffcodeTable
 		int y;
 		int v;
 		int w;
-	};
+	}
 
-	/**
+    /**
 	 * Do the huffman-decoding.
 	 * note! for counta,countb -the 4 bit value is returned in y,
 	 * discard x.
+     * WVB - although I can't believe it, initial tests show that a static version is slightly faster
+     * than an normal method. Go figure ?
 	 */
 	public static int huffman_decoder(HuffcodeTable h, final Xyvw xyvw, BitReserve br)
 	{
-		// array of all huffcodtable headers
-		// 0..31 Huffman code table 0..31
-		// 32,33 count1-tables
 
-		final int dmask = 1 << ((4 * 8) - 1);
-		int level;
-		int point = 0;
-		int error = 1;
-		level = dmask;
-
-		if (h.val == null) return 2;
-
-		/* table 0 needs no bits */
-		if ( h.treelen == 0)
+        Node point=h.root;
+		if (point==null)  // One of the dummy tables.
 		{ 
 			xyvw.x = xyvw.y = 0;
 			return 0;
 		}
 
-		/* Lookup in Huffman table. */
-		do 
+        // array of all huffcodtable headers
+        // 0..31 Huffman code table 0..31
+        // 32,33 count1-tables
+        int error = 1;
+        int level = 1 << ((4 * 8) - 1); // 1<<31
+
+		// Otherwise lookup in Huffman tree.
+		do
 		{
-			if (h.val[point][0]==0)
-			{ 
-				/*end of tree*/
-				xyvw.x = (h.val[point][1] >>> 4);
-				xyvw.y = h.val[point][1] & 0xf;
+            if (point.finalLeft==null)
+			{
+                /*end of tree*/
+                xyvw.x = point.rightMsn;
+                //noinspection SuspiciousNameCombination
+                xyvw.y = point.rightLsn;
 				error = 0;
 				break;
 			}
-			if (br.hget1bit()!=0)
-			{
-				while (h.val[point][1] >= MXOFF) point += h.val[point][1];
-				point += h.val[point][1];
-			}
+			if (br.hget1bit())
+				point=point.finalRight;
 			else
-			{
-				while (h.val[point][0] >= MXOFF) point += h.val[point][0];
-				point += h.val[point][0];
-			}
+                point=point.finalLeft;
 			level >>>= 1;
-			// MDM: ht[0] is always 0;
-		} while ((level !=0 )  || (point < 0) );
+		} while (level!=0);
 
 		/* Process sign encodings for quadruples tables. */
 		if (h.quadrupple)
@@ -485,15 +540,15 @@ final class HuffcodeTable
 			xyvw.y = xyvw.y & 1;
 
 			/* v, w, x and y are reversed in the bitstream.
-		  switch them around to make test bitstream work. */
+		       switch them around to make test bitstream work. */
 			if (xyvw.v!=0)
-				if (br.hget1bit() != 0) xyvw.v = -xyvw.v;
+				if (br.hget1bit()) xyvw.v = -xyvw.v;
 			if (xyvw.w!=0)
-				if (br.hget1bit() != 0) xyvw.w = -xyvw.w;
+				if (br.hget1bit()) xyvw.w = -xyvw.w;
 			if (xyvw.x!=0)
-				if (br.hget1bit() != 0) xyvw.x = -xyvw.x;
+				if (br.hget1bit()) xyvw.x = -xyvw.x;
 			if (xyvw.y!=0)
-				if (br.hget1bit() != 0) xyvw.y = -xyvw.y;
+				if (br.hget1bit()) xyvw.y = -xyvw.y;
 		}
 		else
 		{
@@ -504,12 +559,12 @@ final class HuffcodeTable
 				if (h.xlast == xyvw.x)
 					xyvw.x += br.hgetbits(h.linbits);
 			if (xyvw.x != 0)
-				if (br.hget1bit() != 0) xyvw.x = -xyvw.x;
+				if (br.hget1bit()) xyvw.x = -xyvw.x;
 			if (h.linbits != 0)
 				if (h.ylast == xyvw.y)
 					xyvw.y += br.hgetbits(h.linbits);
 			if (xyvw.y != 0)
-				if (br.hget1bit() != 0) xyvw.y = -xyvw.y;
+				if (br.hget1bit()) xyvw.y = -xyvw.y;
 		}
 		return error;
 	}
@@ -517,39 +572,39 @@ final class HuffcodeTable
 	public static void inithuff()
 	{
 		if (HT [0]!=null) return;
-		HT[0] = new HuffcodeTable(false,0,0,0,-1,null,null,VAL_TAB_DUMMY,0);
-		HT[1] = new HuffcodeTable(false,2,2,0,-1,null,null,VAL_TAB_1,7);
-		HT[2] = new HuffcodeTable(false,3,3,0,-1,null,null,VAL_TAB_2,17);
-		HT[3] = new HuffcodeTable(false,3,3,0,-1,null,null,VAL_TAB_3,17);
-		HT[4] = new HuffcodeTable(false,0,0,0,-1,null,null,VAL_TAB_DUMMY,0);    
-		HT[5] = new HuffcodeTable(false,4,4,0,-1,null,null,VAL_TAB_5,31);
-		HT[6] = new HuffcodeTable(false,4,4,0,-1,null,null,VAL_TAB_6,31);
-		HT[7] = new HuffcodeTable(false,6,6,0,-1,null,null,VAL_TAB_7,71);
-		HT[8] = new HuffcodeTable(false,6,6,0,-1,null,null,VAL_TAB_8,71);
-		HT[9] = new HuffcodeTable(false,6,6,0,-1,null,null,VAL_TAB_9,71);
-		HT[10] = new HuffcodeTable(false,8,8,0,-1,null,null,VAL_TAB_10,127);  
-		HT[11] = new HuffcodeTable(false,8,8,0,-1,null,null,VAL_TAB_11,127);
-		HT[12] = new HuffcodeTable(false,8,8,0,-1,null,null,VAL_TAB_12,127);
-		HT[13] = new HuffcodeTable(false,16,16,0,-1,null,null,VAL_TAB_13,511);
-		HT[14] = new HuffcodeTable(false,0,0,0,-1,null,null,VAL_TAB_DUMMY,0);
-		HT[15] = new HuffcodeTable(false,16,16,0,-1,null,null,VAL_TAB_15,511);
-		HT[16] = new HuffcodeTable(false,16,16,1,-1,null,null,VAL_TAB_16,511);
-		HT[17] = new HuffcodeTable(false,16,16,2,16,null,null,VAL_TAB_16,511);
-		HT[18] = new HuffcodeTable(false,16,16,3,16,null,null,VAL_TAB_16,511);
-		HT[19] = new HuffcodeTable(false,16,16,4,16,null,null,VAL_TAB_16,511);
-		HT[20] = new HuffcodeTable(false,16,16,6,16,null,null,VAL_TAB_16,511);
-		HT[21] = new HuffcodeTable(false,16,16,8,16,null,null,VAL_TAB_16,511);
-		HT[22] = new HuffcodeTable(false,16,16,10,16,null,null,VAL_TAB_16,511);
-		HT[23] = new HuffcodeTable(false,16,16,13,16,null,null,VAL_TAB_16,511);
-		HT[24] = new HuffcodeTable(false,16,16,4,-1,null,null,VAL_TAB_24,512);
-		HT[25] = new HuffcodeTable(false,16,16,5,24,null,null,VAL_TAB_24,512);
-		HT[26] = new HuffcodeTable(false,16,16,6,24,null,null,VAL_TAB_24,512);
-		HT[27] = new HuffcodeTable(false,16,16,7,24,null,null,VAL_TAB_24,512);
-		HT[28] = new HuffcodeTable(false,16,16,8,24,null,null,VAL_TAB_24,512);  
-		HT[29] = new HuffcodeTable(false,16,16,9,24,null,null,VAL_TAB_24,512);
-		HT[30] = new HuffcodeTable(false,16,16,11,24,null,null,VAL_TAB_24,512);
-		HT[31] = new HuffcodeTable(false,16,16,13,24,null,null,VAL_TAB_24,512);
-		HT[32] = new HuffcodeTable(true,1,16,0,-1,null,null,VAL_TAB_32,31);
-		HT[33] = new HuffcodeTable(true,1,16,0,-1,null,null,VAL_TAB_33,31);
+		HT[0] = new HuffcodeTable(false,0,0,0,null,0);
+		HT[1] = new HuffcodeTable(false,2,2,0,VAL_TAB_1,7);
+		HT[2] = new HuffcodeTable(false,3,3,0,VAL_TAB_2,17);
+		HT[3] = new HuffcodeTable(false,3,3,0,VAL_TAB_3,17);
+		HT[4] = new HuffcodeTable(false,0,0,0,null,0);
+		HT[5] = new HuffcodeTable(false,4,4,0,VAL_TAB_5,31);
+		HT[6] = new HuffcodeTable(false,4,4,0,VAL_TAB_6,31);
+		HT[7] = new HuffcodeTable(false,6,6,0,VAL_TAB_7,71);
+		HT[8] = new HuffcodeTable(false,6,6,0,VAL_TAB_8,71);
+		HT[9] = new HuffcodeTable(false,6,6,0,VAL_TAB_9,71);
+		HT[10] = new HuffcodeTable(false,8,8,0,VAL_TAB_10,127);
+		HT[11] = new HuffcodeTable(false,8,8,0,VAL_TAB_11,127);
+		HT[12] = new HuffcodeTable(false,8,8,0,VAL_TAB_12,127);
+		HT[13] = new HuffcodeTable(false,16,16,0,VAL_TAB_13,511);
+		HT[14] = new HuffcodeTable(false,0,0,0,null,0);
+		HT[15] = new HuffcodeTable(false,16,16,0,VAL_TAB_15,511);
+		HT[16] = new HuffcodeTable(false,16,16,1,VAL_TAB_16,511);
+		HT[17] = new HuffcodeTable(false,16,16,2,VAL_TAB_16,511);
+		HT[18] = new HuffcodeTable(false,16,16,3,VAL_TAB_16,511);
+		HT[19] = new HuffcodeTable(false,16,16,4,VAL_TAB_16,511);
+		HT[20] = new HuffcodeTable(false,16,16,6,VAL_TAB_16,511);
+		HT[21] = new HuffcodeTable(false,16,16,8,VAL_TAB_16,511);
+		HT[22] = new HuffcodeTable(false,16,16,10,VAL_TAB_16,511);
+		HT[23] = new HuffcodeTable(false,16,16,13,VAL_TAB_16,511);
+		HT[24] = new HuffcodeTable(false,16,16,4,VAL_TAB_24,512);
+		HT[25] = new HuffcodeTable(false,16,16,5,VAL_TAB_24,512);
+		HT[26] = new HuffcodeTable(false,16,16,6,VAL_TAB_24,512);
+		HT[27] = new HuffcodeTable(false,16,16,7,VAL_TAB_24,512);
+		HT[28] = new HuffcodeTable(false,16,16,8,VAL_TAB_24,512);
+		HT[29] = new HuffcodeTable(false,16,16,9,VAL_TAB_24,512);
+		HT[30] = new HuffcodeTable(false,16,16,11,VAL_TAB_24,512);
+		HT[31] = new HuffcodeTable(false,16,16,13,VAL_TAB_24,512);
+		HT[32] = new HuffcodeTable(true,1,16,0,VAL_TAB_32,31);
+		HT[33] = new HuffcodeTable(true,1,16,0,VAL_TAB_33,31);
 	}
 }
