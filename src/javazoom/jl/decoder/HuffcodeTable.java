@@ -291,7 +291,7 @@ final class HuffcodeTable
 		{0,255},
 	};
 
-	private static final int  VAL_TAB_16[][] = {
+	private static final int VAL_TAB_16[][] = {
 		{2,1},{0,0},{6,1},{2,1},{0,16},{2,1},{0,1},{0,17},{42,1},{8,1},
 		{4,1},{2,1},{0,32},{0,2},{2,1},{0,33},{0,18},{10,1},{6,1},{2,1},
 		{0,34},{2,1},{0,48},{0,3},{2,1},{0,49},{0,19},{10,1},{4,1},{2,1},
@@ -442,7 +442,7 @@ final class HuffcodeTable
             finalNodes[i]=new Node();
         }
 
-        // Link 'm together so that we can traverse them faster during the huffman_decoder routine.
+        // Link 'm together so that we can traverse them faster during the huffmanDecoder routine.
         for(int i = 0 ; i < nodes.length; i++)
         {
             IntermediateNode intermediate=nodes[i];
@@ -466,15 +466,16 @@ final class HuffcodeTable
                 while(point<nodes.length && nodes[point].right>=MXOFF) point+=nodes[point].right;
                 if (point>=nodes.length) continue;
                 point+=nodes[point].right;
-                // TODO - check whether the tables are correct.
                 // I do not understand how it is possible that there are references outside the tree.
                 // In table 24 there is such an entry. It might be that the treelength check that is omitted
                 // is related to this. Don't know. Or it might never occur because of the level depth.
+                // It is nonetheless annoying that no valid tree can be generated. And in some mp3s it
+                // has already led to errors. See CreateTable24  which shows that the javazoomtables
+                // are actually consistent with the original mp3 decoder code.
                 if(point>=finalNodes.length) continue;
                 node.finalRight=finalNodes[point];
             }
         }
-
         root=finalNodes[0];
    }
 
@@ -496,7 +497,7 @@ final class HuffcodeTable
      * WVB - although I can't believe it, initial tests show that a static version is slightly faster
      * than an normal method. Go figure ?
 	 */
-	public static int huffman_decoder(HuffcodeTable h, final Xyvw xyvw, BitReserve br)
+	public static int huffmanDecoder(HuffcodeTable h, final Xyvw xyvw, BitReserve br)
 	{
 
         Node point=h.root;
@@ -510,7 +511,7 @@ final class HuffcodeTable
         // 0..31 Huffman code table 0..31
         // 32,33 count1-tables
         int error = 1;
-        int level = 1 << ((4 * 8) - 1); // 1<<31
+        int level = 1 << 31; //1 << ((4 * 8) - 1);
 
 		// Otherwise lookup in Huffman tree.
 		do
@@ -529,7 +530,7 @@ final class HuffcodeTable
 			else
                 point=point.finalLeft;
 			level >>>= 1;
-		} while (level!=0);
+		} while (level!=0 && point!=null);
 
 		/* Process sign encodings for quadruples tables. */
 		if (h.quadrupple)

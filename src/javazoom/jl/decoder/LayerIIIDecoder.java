@@ -725,7 +725,7 @@ final class LayerIIIDecoder implements FrameDecoder
 			else if (i<region2Start) h = HuffcodeTable.HT[grInfo.table_select[1]];
 			else                     h = HuffcodeTable.HT[grInfo.table_select[2]];
 
-			HuffcodeTable.huffman_decoder(h, xyvw, br);
+			HuffcodeTable.huffmanDecoder(h, xyvw, br);
 			is_1d[index++] = xyvw.x;
 			is_1d[index++] = xyvw.y;
 			//CheckSumHuff = CheckSumHuff + xyvw.x + xyvw.y;
@@ -737,7 +737,7 @@ final class LayerIIIDecoder implements FrameDecoder
 
 		while ((num_bits < part2_3_end) && (index < 576))
 		{
-			HuffcodeTable.huffman_decoder(h, xyvw, br);
+			HuffcodeTable.huffmanDecoder(h, xyvw, br);
 			is_1d[index++] = xyvw.v;
 			is_1d[index++] = xyvw.w;
 			is_1d[index++] = xyvw.x;
