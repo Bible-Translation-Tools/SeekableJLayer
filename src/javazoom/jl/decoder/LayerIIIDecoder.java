@@ -72,7 +72,6 @@ final class LayerIIIDecoder implements FrameDecoder
 			SynthesisFilter filtera, SynthesisFilter filterb,
 			Obuffer buffer0, int which_ch0)
 	{
-		HuffcodeTable.inithuff();
 		is_1d = new int[SBLIMIT*SSLIMIT+4];
 		ro = new float[2][SBLIMIT][SSLIMIT];
 		lr = new float[2][SBLIMIT][SSLIMIT];

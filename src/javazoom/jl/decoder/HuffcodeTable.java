@@ -415,7 +415,7 @@ final class HuffcodeTable
 		{0,15},
 	};
 
-	public final static HuffcodeTable[] HT = new HuffcodeTable[HTN];
+	public final static HuffcodeTable[] HT = setupHuffTables();
 
 	/**
 	 * Computes all Huffman Tables.
@@ -499,7 +499,10 @@ final class HuffcodeTable
 	 */
 	public static int huffmanDecoder(HuffcodeTable h, final Xyvw xyvw, BitReserve br)
 	{
-
+        if (h==null)
+        {
+            System.out.println("WTF");
+        }
         Node point=h.root;
 		if (point==null)  // One of the dummy tables.
 		{ 
@@ -570,42 +573,43 @@ final class HuffcodeTable
 		return error;
 	}
 
-	public static void inithuff()
+	public static HuffcodeTable[] setupHuffTables()
 	{
-		if (HT [0]!=null) return;
-		HT[0] = new HuffcodeTable(false,0,0,0,null,0);
-		HT[1] = new HuffcodeTable(false,2,2,0,VAL_TAB_1,7);
-		HT[2] = new HuffcodeTable(false,3,3,0,VAL_TAB_2,17);
-		HT[3] = new HuffcodeTable(false,3,3,0,VAL_TAB_3,17);
-		HT[4] = new HuffcodeTable(false,0,0,0,null,0);
-		HT[5] = new HuffcodeTable(false,4,4,0,VAL_TAB_5,31);
-		HT[6] = new HuffcodeTable(false,4,4,0,VAL_TAB_6,31);
-		HT[7] = new HuffcodeTable(false,6,6,0,VAL_TAB_7,71);
-		HT[8] = new HuffcodeTable(false,6,6,0,VAL_TAB_8,71);
-		HT[9] = new HuffcodeTable(false,6,6,0,VAL_TAB_9,71);
-		HT[10] = new HuffcodeTable(false,8,8,0,VAL_TAB_10,127);
-		HT[11] = new HuffcodeTable(false,8,8,0,VAL_TAB_11,127);
-		HT[12] = new HuffcodeTable(false,8,8,0,VAL_TAB_12,127);
-		HT[13] = new HuffcodeTable(false,16,16,0,VAL_TAB_13,511);
-		HT[14] = new HuffcodeTable(false,0,0,0,null,0);
-		HT[15] = new HuffcodeTable(false,16,16,0,VAL_TAB_15,511);
-		HT[16] = new HuffcodeTable(false,16,16,1,VAL_TAB_16,511);
-		HT[17] = new HuffcodeTable(false,16,16,2,VAL_TAB_16,511);
-		HT[18] = new HuffcodeTable(false,16,16,3,VAL_TAB_16,511);
-		HT[19] = new HuffcodeTable(false,16,16,4,VAL_TAB_16,511);
-		HT[20] = new HuffcodeTable(false,16,16,6,VAL_TAB_16,511);
-		HT[21] = new HuffcodeTable(false,16,16,8,VAL_TAB_16,511);
-		HT[22] = new HuffcodeTable(false,16,16,10,VAL_TAB_16,511);
-		HT[23] = new HuffcodeTable(false,16,16,13,VAL_TAB_16,511);
-		HT[24] = new HuffcodeTable(false,16,16,4,VAL_TAB_24,512);
-		HT[25] = new HuffcodeTable(false,16,16,5,VAL_TAB_24,512);
-		HT[26] = new HuffcodeTable(false,16,16,6,VAL_TAB_24,512);
-		HT[27] = new HuffcodeTable(false,16,16,7,VAL_TAB_24,512);
-		HT[28] = new HuffcodeTable(false,16,16,8,VAL_TAB_24,512);
-		HT[29] = new HuffcodeTable(false,16,16,9,VAL_TAB_24,512);
-		HT[30] = new HuffcodeTable(false,16,16,11,VAL_TAB_24,512);
-		HT[31] = new HuffcodeTable(false,16,16,13,VAL_TAB_24,512);
-		HT[32] = new HuffcodeTable(true,1,16,0,VAL_TAB_32,31);
-		HT[33] = new HuffcodeTable(true,1,16,0,VAL_TAB_33,31);
+        HuffcodeTable[] huffcodeTables=new HuffcodeTable[HTN];
+		huffcodeTables[0] = new HuffcodeTable(false,0,0,0,null,0);
+		huffcodeTables[1] = new HuffcodeTable(false,2,2,0,VAL_TAB_1,7);
+		huffcodeTables[2] = new HuffcodeTable(false,3,3,0,VAL_TAB_2,17);
+		huffcodeTables[3] = new HuffcodeTable(false,3,3,0,VAL_TAB_3,17);
+		huffcodeTables[4] = new HuffcodeTable(false,0,0,0,null,0);
+		huffcodeTables[5] = new HuffcodeTable(false,4,4,0,VAL_TAB_5,31);
+		huffcodeTables[6] = new HuffcodeTable(false,4,4,0,VAL_TAB_6,31);
+		huffcodeTables[7] = new HuffcodeTable(false,6,6,0,VAL_TAB_7,71);
+		huffcodeTables[8] = new HuffcodeTable(false,6,6,0,VAL_TAB_8,71);
+		huffcodeTables[9] = new HuffcodeTable(false,6,6,0,VAL_TAB_9,71);
+		huffcodeTables[10] = new HuffcodeTable(false,8,8,0,VAL_TAB_10,127);
+		huffcodeTables[11] = new HuffcodeTable(false,8,8,0,VAL_TAB_11,127);
+		huffcodeTables[12] = new HuffcodeTable(false,8,8,0,VAL_TAB_12,127);
+		huffcodeTables[13] = new HuffcodeTable(false,16,16,0,VAL_TAB_13,511);
+		huffcodeTables[14] = new HuffcodeTable(false,0,0,0,null,0);
+		huffcodeTables[15] = new HuffcodeTable(false,16,16,0,VAL_TAB_15,511);
+		huffcodeTables[16] = new HuffcodeTable(false,16,16,1,VAL_TAB_16,511);
+		huffcodeTables[17] = new HuffcodeTable(false,16,16,2,VAL_TAB_16,511);
+		huffcodeTables[18] = new HuffcodeTable(false,16,16,3,VAL_TAB_16,511);
+		huffcodeTables[19] = new HuffcodeTable(false,16,16,4,VAL_TAB_16,511);
+		huffcodeTables[20] = new HuffcodeTable(false,16,16,6,VAL_TAB_16,511);
+		huffcodeTables[21] = new HuffcodeTable(false,16,16,8,VAL_TAB_16,511);
+		huffcodeTables[22] = new HuffcodeTable(false,16,16,10,VAL_TAB_16,511);
+		huffcodeTables[23] = new HuffcodeTable(false,16,16,13,VAL_TAB_16,511);
+		huffcodeTables[24] = new HuffcodeTable(false,16,16,4,VAL_TAB_24,512);
+		huffcodeTables[25] = new HuffcodeTable(false,16,16,5,VAL_TAB_24,512);
+		huffcodeTables[26] = new HuffcodeTable(false,16,16,6,VAL_TAB_24,512);
+		huffcodeTables[27] = new HuffcodeTable(false,16,16,7,VAL_TAB_24,512);
+		huffcodeTables[28] = new HuffcodeTable(false,16,16,8,VAL_TAB_24,512);
+		huffcodeTables[29] = new HuffcodeTable(false,16,16,9,VAL_TAB_24,512);
+		huffcodeTables[30] = new HuffcodeTable(false,16,16,11,VAL_TAB_24,512);
+		huffcodeTables[31] = new HuffcodeTable(false,16,16,13,VAL_TAB_24,512);
+		huffcodeTables[32] = new HuffcodeTable(true,1,16,0,VAL_TAB_32,31);
+		huffcodeTables[33] = new HuffcodeTable(true,1,16,0,VAL_TAB_33,31);
+        return huffcodeTables;
 	}
 }
