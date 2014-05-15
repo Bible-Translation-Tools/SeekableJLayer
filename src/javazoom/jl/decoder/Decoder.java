@@ -86,7 +86,14 @@ public class Decoder
 
 		int layer = stream.layer();
 		final FrameDecoder decoder = retrieveDecoder( stream, layer);
-		decoder.decodeFrame();
+		try
+        {
+            decoder.decodeFrame();
+        }
+        catch(ArrayIndexOutOfBoundsException oob)
+        {
+            throw new DecoderOutOfBounds(oob);
+        }
 		return output;
 	}
 
