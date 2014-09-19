@@ -135,7 +135,7 @@ final class BitReserve
 	/**
 	 * Returns next bit from reserve.
 	 */
-	public boolean hget1bit()
+	public final boolean hget1bit()
 	{   	  
 		totbit++;	  
 		final boolean val = buf[buf_byte_idx];
