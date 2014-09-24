@@ -64,7 +64,6 @@ public class Decoder
 	 * Creates a new <code>Decoder</code> instance with default 
 	 * parameters.
 	 */
-
 	public Decoder(int channelChoice, boolean spectralContent)
 	{
 		this.channelChoice=channelChoice;
