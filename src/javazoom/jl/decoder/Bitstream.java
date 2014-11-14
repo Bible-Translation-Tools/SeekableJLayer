@@ -113,7 +113,7 @@ public final class Bitstream extends Header
 			0x00001FFF, 0x00003FFF, 0x00007FFF, 0x0000FFFF,
 			0x0001FFFF };
 
-	private final RandomAccessStream source;
+	private final SeekableInput source;
 
 	private final byte				syncbuf[] = new byte[4];
 
@@ -131,7 +131,7 @@ public final class Bitstream extends Header
 	 *
 	 * @param in	The InputStream to read from.
 	 */
-	public Bitstream(RandomAccessStream in)
+	public Bitstream(SeekableInput in)
 	{
 		source = in;
 		reset();
