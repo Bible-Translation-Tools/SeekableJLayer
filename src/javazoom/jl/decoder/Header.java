@@ -32,6 +32,7 @@
 package javazoom.jl.decoder;
 
 import java.io.EOFException;
+import java.io.IOException;
 
 /**
  * Class for extracting information from a frame header.
@@ -118,8 +119,8 @@ class Header
 	 * Read a 32-bit header from the bitstream, including the framedata itself.
 	 * @throws EOFException 
 	 */
-	void read_header(Bitstream stream, Crc16[] crcp) throws JavaLayerException
-	{
+	void read_header(Bitstream stream, Crc16[] crcp) throws JavaLayerException, IOException
+    {
 		int headerstring;
 		int channel_bitrate;
 		boolean sync = false;
@@ -134,9 +135,9 @@ class Header
 					if (h_version == MPEG2_LSF)
 						h_version = MPEG25_LSF;
 					else
-						throw new BitStreamGeneralError("Header error",null);
+						throw new BitStreamHeaderError("Header error",null);
 				if ((h_sample_frequency = ((headerstring >>> 10) & 3)) == 3)
-					throw new BitStreamGeneralError("Frequency error",null);
+					throw new BitStreamHeaderError("Frequency error",null);
 			}
 			h_layer = 4 - (headerstring >>> 17) & 3;
 			h_protection_bit = (headerstring >>> 16) & 1;
@@ -307,7 +308,7 @@ class Header
 		}
 		catch (ArrayIndexOutOfBoundsException e)
 		{
-			throw new BitStreamGeneralError("XingVBRHeader Corrupted",e);
+			throw new BitStreamHeaderError("XingVBRHeader Corrupted",e);
 		}
 
 		// Trying VBRI header.			
@@ -339,7 +340,7 @@ class Header
 		}
 		catch (ArrayIndexOutOfBoundsException e)
 		{
-			throw new BitStreamGeneralError("VBRIVBRHeader Corrupted",e);
+			throw new BitStreamHeaderError("VBRIVBRHeader Corrupted",e);
 		}
 	}
 

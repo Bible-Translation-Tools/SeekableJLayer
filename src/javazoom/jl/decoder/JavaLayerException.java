@@ -22,7 +22,6 @@ package javazoom.jl.decoder;
 
 import java.io.PrintStream;
 
-
 /**
  * The JavaLayerException is the base class for all API-level
  * exceptions thrown by JavaLayer. To facilitate conversion and 
@@ -34,14 +33,19 @@ import java.io.PrintStream;
 @SuppressWarnings("serial") 
 public class JavaLayerException extends Exception
 {
-	private final Throwable	exception;
+	public final Throwable	exception;
 	
 	public JavaLayerException()
 	{
 		exception=null;
-	}	
-	
-	JavaLayerException(String msg, Throwable t)
+	}
+
+    public JavaLayerException(Throwable t)
+    {
+        exception=t;
+    }
+
+    JavaLayerException(String msg, Throwable t)
 	{
 		super(msg);
 		exception = t;
