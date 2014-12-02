@@ -259,20 +259,9 @@ public final class Bitstream extends Header
 	 */
 	private void readNextFrame() throws JavaLayerException, IOException
     {
-		if (framesize == -1)
-			nextFrame();
-	}
-
-	/**
-	 * Read next MP3 frame.
-	 * @throws JavaLayerException
-	 * @throws EOFException
-     * TODO - remove intermediate call
-	 */
-	private void nextFrame() throws IOException, JavaLayerException
-    {
-		// entire frame is read by the header class.
-		read_header(this, crc);
+		if (framesize != -1) return;
+        // entire frame is read by the header class.
+        read_header(this, crc);
 	}
 
 	/**
@@ -304,7 +293,7 @@ public final class Bitstream extends Header
 	 */
 	boolean isSyncCurrentPosition(int syncmode) throws IOException
     {
-		int read = readBytes(syncbuf, 0, 4);
+		int read = source.read(syncbuf, 0, 4);
 		int headerstring = ((syncbuf[0] << 24) & 0xFF000000) | ((syncbuf[1] << 16) & 0x00FF0000) | ((syncbuf[2] << 8) & 0x0000FF00) | ((syncbuf[3] << 0) & 0x000000FF);
 		source.unread(read);
 		if (read==4) return isSyncMark(headerstring, syncmode, syncword);
@@ -323,7 +312,7 @@ public final class Bitstream extends Header
 		boolean sync;
 		int headerstring;
 		// read additional 2 bytes
-		int bytesRead = readBytes(syncbuf, 0, 3);
+		int bytesRead = source.read(syncbuf, 0, 3);
 		if (bytesRead!=3) throw new BitStreamEOF();
 
 		headerstring = ((syncbuf[0] << 16) & 0x00FF0000) | ((syncbuf[1] << 8) & 0x0000FF00) | ((syncbuf[2] << 0) & 0x000000FF);
@@ -331,7 +320,7 @@ public final class Bitstream extends Header
 		do
 		{
 			headerstring <<= 8;
-			if (readBytes(syncbuf, 3, 1)!=1)
+			if (source.read(syncbuf, 3, 1)!=1)
 				throw new BitStreamEOF();
 
 			headerstring |= (syncbuf[3] & 0x000000FF);
@@ -375,11 +364,16 @@ public final class Bitstream extends Header
 	 */
 	int read_frame_data(int bytesize) throws IOException
     {
-		final int numread = readFully(frame_bytes, 0, bytesize);
+
+        final int numRead = source.read(frame_bytes, 0, bytesize);
+        if (numRead==-1) return -1;
+        int offs=numRead;
+        while(offs<bytesize)
+            frame_bytes[offs++] = 0;
 		framesize = bytesize;
 		wordpointer = -1;
 		bitindex = -1;
-		return numread;
+		return numRead;
 	}
 
 	/**
@@ -394,11 +388,10 @@ public final class Bitstream extends Header
 
 		for (int k=0;k<bytesize;k=k+4)
 		{
-			byte b0 = 0;
 			byte b1 = 0;
 			byte b2 = 0;
 			byte b3 = 0;
-			b0 = byteread[k];
+			byte b0 = byteread[k];
 			if (k+1<bytesize) b1 = byteread[k+1];
 			if (k+2<bytesize) b2 = byteread[k+2];
 			if (k+3<bytesize) b3 = byteread[k+3];
@@ -460,36 +453,6 @@ public final class Bitstream extends Header
 	{
 		syncword = syncword0 & 0xFFFFFF3F;
 		single_ch_mode = ((syncword0 & 0x000000C0) == 0x000000C0);
-	}
-
-	/**
-	 * Reads the exact number of bytes from the source
-	 * input stream into a byte array.
-	 *
-	 * @param b		The byte array to read the specified number
-	 *				of bytes into.
-	 * @param offs	The index in the array where the first byte
-	 *				read should be stored.
-	 * @param len	the number of bytes to read.
-     *
-     * TODO - move this call up the call hierarchy
-	 */
-	private int readFully(byte[] b, int offs, int len) throws IOException
-    {
-        final int totalBytesRead = source.read(b, offs, len);
-        if (totalBytesRead==-1) return -1;
-        offs=totalBytesRead;
-        while(offs<len)
-            b[offs++] = 0;
-		return totalBytesRead;
-	}
-
-	/**
-	 * TODO - get rid of this intermediate one and move it to the randomaccessstream.
-	 */
-	private int readBytes(byte[] b, int offs, int len) throws IOException
-    {
-        return source.read(b,offs,len);
 	}
 
 	public void reset() 

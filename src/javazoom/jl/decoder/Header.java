@@ -73,7 +73,7 @@ class Header
 	private int				h_number_of_subbands, h_intensity_stereo_bound;
 //	private boolean			h_copyright, h_original;
 	// VBR support added by E.B
-	private final double[] 		h_vbr_time_per_frame = {-1, 384, 1152, 1152};
+	private final static int[] H_VBR_SAMPLES_PER_FRAME = {-1, 384, 1152, 1152};
 	private boolean			h_vbr;
 	private int				h_vbr_frames;
 //	private int				h_vbr_scale;
@@ -462,57 +462,26 @@ class Header
 	}
 
 	/**
-	 * Returns the maximum number of frames in the stream.
-	 * @param streamsize
-	 * @return number of frames
-	 */
-/*	private int max_number_of_frames(int streamsize)  // E.B
-	{
-		if (h_vbr == true) return h_vbr_frames;
-		else
-		{
-			if ((framesize + 4 - h_padding_bit) == 0) return 0;
-			else return(streamsize / (framesize + 4 - h_padding_bit));
-		}
-	}
-*/
-// TODO Remove unused code found by UCDetector
-// 	/**
-// 	 * Returns the maximum number of frames in the stream.
-// 	 * @param streamsize
-// 	 * @return number of frames
-// 	 */
-// 	public int min_number_of_frames(int streamsize) // E.B
-// 	{
-// 		if (h_vbr == true) return h_vbr_frames;
-// 		else
-// 		{
-// 			if ((framesize + 5 - h_padding_bit) == 0) return 0;
-// 			else return(streamsize / (framesize + 5 - h_padding_bit));
-// 		}
-// 	}
-
-
-	/**
-	 * TODO - modify this to avoid the intermediate samplerate convertion.
 	 * WVB - number of sample generated per frame.
 	 */
+    final static private int SAMPLES_PER_FRAME[][] = {{192, 384, 96},
+            {576, 1152, 288},
+            {576, 1152, 576}};
+
 	public int samplesPerFrame()
 	{
-		if (h_vbr == true)
+		if (h_vbr)
 		{			
-			int tpf = (int) h_vbr_time_per_frame[layer()];
-			if ((h_version == MPEG2_LSF) || (h_version == MPEG25_LSF)) tpf /= 2;
+			final int tpf = H_VBR_SAMPLES_PER_FRAME[h_layer];
+			if ((h_version == MPEG2_LSF) || (h_version == MPEG25_LSF)) return tpf>>1;
 			return tpf;
 		}
 		else
 		{			
-			// WVB - hmmm this is partly interesting because we get different results depending on the sample_frequency we have
-			// Apparently we don't have any mp3 that will generate the intermediate ones 
-			int samplesPerFrameArray[][] = {{192, 384, 96},
-					{576, 1152, 288},
-					{576, 1152, 576}};
-			return samplesPerFrameArray[h_layer-1][h_version];
+			// WVB - hmmm this is partly interesting because we get different results depending on the
+			// sample_frequency we have. Apparently we don't have any mp3 that will generate the
+			// intermediate ones
+			return SAMPLES_PER_FRAME[h_layer-1][h_version];
 		}
 	}
 
@@ -522,9 +491,9 @@ class Header
 	 */
 	private float ms_per_frame() // E.B
 	{
-		if (h_vbr == true)
+		if (h_vbr)
 		{			
-			double tpf = h_vbr_time_per_frame[layer()] / frequency();
+			double tpf = H_VBR_SAMPLES_PER_FRAME[layer()] / frequency();
 			if ((h_version == MPEG2_LSF) || (h_version == MPEG25_LSF)) tpf /= 2;
 			return ((float) (tpf * 1000));
 		}
@@ -536,17 +505,6 @@ class Header
 			return(ms_per_frame_array[h_layer-1][h_sample_frequency]);
 		}
 	}
-
-// TODO Remove unused code found by UCDetector
-// 	/**
-// 	 * Returns total ms.
-// 	 * @param streamsize
-// 	 * @return total milliseconds
-// 	 */
-// 	public float total_ms(int streamsize) // E.B
-// 	{
-// 		return(max_number_of_frames(streamsize) * ms_per_frame());
-// 	}
 
 	// functions which return header informations as strings:
 	/**
@@ -614,11 +572,10 @@ class Header
 	 */
 	private String bitrate_string()
 	{
-		if (h_vbr == true)
-		{
-			return Integer.toString(bitrate()/1000)+" kb/s";		
-		}
-		else return bitrate_str[h_version][h_layer - 1][h_bitrate_index];
+		if (h_vbr)
+			return Integer.toString(bitrate()/1000)+" kb/s";
+		else
+            return bitrate_str[h_version][h_layer - 1][h_bitrate_index];
 	}
 
 	/**
@@ -627,11 +584,10 @@ class Header
 	 */
 	private int bitrate()
 	{
-		if (h_vbr == true)
-		{
-			return ((int) ((h_vbr_bytes * 8) / (ms_per_frame() * h_vbr_frames)))*1000;		
-		}
-		else return bitrates[h_version][h_layer - 1][h_bitrate_index];
+		if (h_vbr)
+            return ((int) ((h_vbr_bytes * 8) / (ms_per_frame() * h_vbr_frames)))*1000;
+        else
+            return bitrates[h_version][h_layer - 1][h_bitrate_index];
 	}
 
 	/**
