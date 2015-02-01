@@ -1149,8 +1149,7 @@ final class SynthesisFilter
 			len = 0;
 
 		float[] subarray = new float[len];
-		for (int i=0; i<len; i++)
-			subarray[i] = array[offs+i];
+        System.arraycopy(array, offs, subarray, 0, len);
 		return new D16(subarray);
 	}
 }

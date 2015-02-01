@@ -198,7 +198,7 @@ public final class Bitstream extends Header
 /*			int majorVersion = id3header[0];
 			int revision = id3header[1];*/
 			in.read(id3header,0,4);
-			size = (int) (id3header[0] << 21) + (id3header[1] << 14) + (id3header[2] << 7) + (id3header[3]);
+			size = (id3header[0] << 21) + (id3header[1] << 14) + (id3header[2] << 7) + (id3header[3]);
 		}
 		return size+10;
 	}
@@ -294,7 +294,7 @@ public final class Bitstream extends Header
 	boolean isSyncCurrentPosition(int syncmode) throws IOException
     {
 		int read = source.read(syncbuf, 0, 4);
-		int headerstring = ((syncbuf[0] << 24) & 0xFF000000) | ((syncbuf[1] << 16) & 0x00FF0000) | ((syncbuf[2] << 8) & 0x0000FF00) | ((syncbuf[3] << 0) & 0x000000FF);
+		int headerstring = ((syncbuf[0] << 24) & 0xFF000000) | ((syncbuf[1] << 16) & 0x00FF0000) | ((syncbuf[2] << 8) & 0x0000FF00) | (syncbuf[3] & 0x000000FF);
 		source.unread(read);
 		if (read==4) return isSyncMark(headerstring, syncmode, syncword);
 		else return read==0;
@@ -315,7 +315,7 @@ public final class Bitstream extends Header
 		int bytesRead = source.read(syncbuf, 0, 3);
 		if (bytesRead!=3) throw new BitStreamEOF();
 
-		headerstring = ((syncbuf[0] << 16) & 0x00FF0000) | ((syncbuf[1] << 8) & 0x0000FF00) | ((syncbuf[2] << 0) & 0x000000FF);
+		headerstring = ((syncbuf[0] << 16) & 0x00FF0000) | ((syncbuf[1] << 8) & 0x0000FF00) | ((syncbuf[2]) & 0x000000FF);
 
 		do
 		{
@@ -337,7 +337,7 @@ public final class Bitstream extends Header
 
 	private boolean isSyncMark(int headerstring, int syncmode, int word)
 	{
-		boolean sync = false;
+		boolean sync;
 
 		if (syncmode == INITIAL_SYNC)
 			sync =  ((headerstring & 0xFFE00000) == 0xFFE00000);	// SZD: MPEG 2.5

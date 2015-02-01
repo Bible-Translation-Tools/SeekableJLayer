@@ -174,7 +174,7 @@ class LayerIDecoder implements FrameDecoder
 	  public abstract void read_scalefactor (Bitstream stream) throws JavaLayerException;
 	  public abstract boolean read_sampledata (Bitstream stream) throws JavaLayerException;
 	  public abstract boolean put_next_sample (int channels, SynthesisFilter filter1, SynthesisFilter filter2);
-	};
+	}
 	
 	/**
 	 * Class for layer I subbands in single channel mode.
@@ -283,7 +283,7 @@ class LayerIDecoder implements FrameDecoder
 	    }
 	    return true;
 	  }
-	};
+	}
 	
 	/**
 	 * Class for layer I subbands in joint stereo mode.
@@ -344,7 +344,7 @@ class LayerIDecoder implements FrameDecoder
 	    }
 	    return true;
 	  }
-	};
+	}
 	
 	/**
 	 * Class for layer I subbands in stereo mode.
@@ -426,5 +426,5 @@ class LayerIDecoder implements FrameDecoder
 	@Override
 	public void seek_notify() 
 	{
-	};
+	}
 }

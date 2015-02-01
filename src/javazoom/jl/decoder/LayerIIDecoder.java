@@ -722,7 +722,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 
 			return  ++samplenumber == 3;
 		}
-	};
+	}
 
 	/**
 	 * Class for layer II subbands in joint stereo mode.
@@ -850,7 +850,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			else
 				return false;
 		}
-	};
+	}
 
 	/**
 	 * Class for layer II subbands in stereo mode.

@@ -189,7 +189,7 @@ public class Decoder
 		if (l3decoder!=null) l3decoder.seek_notify();
 		if (l2decoder!=null) l2decoder.seek_notify();
 		if (l1decoder!=null) l1decoder.seek_notify();
-	};
+	}
 
 	public void reset() 
 	{
@@ -197,6 +197,6 @@ public class Decoder
 		l2decoder=null;
 		l1decoder=null;
 		initialized=false;
-	};
+	}
 }
 
