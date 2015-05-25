@@ -29,7 +29,7 @@ package javazoom.jl.decoder;
  * The <code>SampleBuffer</code> class implements an output buffer
  * that provides storage for a fixed size block of samples. 
  */
-final class SampleBuffer implements Obuffer
+public final class SampleBuffer implements Obuffer
 {
 	// Buffer content
 	private final short[] buffer;
