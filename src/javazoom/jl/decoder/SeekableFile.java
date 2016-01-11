@@ -69,7 +69,7 @@ public final class SeekableFile extends SeekableInput
 	}
 
 	@Override
-	public int read(byte[] target, int offset, int length) throws IOException 
+	public int read(byte[] target, int offset, int length) throws IOException
 	{
 		if (length == 0) return 0;
 		final int startOffset = offset;
