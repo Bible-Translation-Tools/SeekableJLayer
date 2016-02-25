@@ -6,13 +6,9 @@ package javazoom.jl.decoder;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 
-/**
- * A buffered random file access. Helps to seek in an mp3 file
- */
-public class RandomAccessStream extends InputStream
+public final class SeekableFile extends SeekableInput
 {
 	private final RandomAccessFile raf;
 	// the file size
@@ -30,7 +26,7 @@ public class RandomAccessStream extends InputStream
 
 	private final static int BUFFER_SIZE=8192; // is about 20 frames.
 	private final byte[] buffer=new byte[BUFFER_SIZE];
-	public RandomAccessStream(String fn) throws FileNotFoundException 
+	public SeekableFile(String fn) throws FileNotFoundException
 	{
 		File f=new File(fn);
 		raf=new RandomAccessFile(f, "r");
@@ -58,7 +54,7 @@ public class RandomAccessStream extends InputStream
 	{
 		if (retrievalPosition>=bufferEndPosition || retrievalPosition<bufferPosition)
 		{
-			// When the fileposition is not the same as the endposition then we don't need a seek
+			// When the fileposition is not the same as the endposition then we need to seek
 			if (filePosition!=retrievalPosition)
 			{
 				raf.seek(retrievalPosition);
@@ -73,7 +69,7 @@ public class RandomAccessStream extends InputStream
 	}
 
 	@Override
-	public int read(byte[] target, int offset, int length) throws IOException 
+	public int read(byte[] target, int offset, int length) throws IOException
 	{
 		if (length == 0) return 0;
 		final int startOffset = offset;
@@ -106,7 +102,7 @@ public class RandomAccessStream extends InputStream
 		return retrievalPosition-oldRetrievalPos;
 	}
 
-	void unread(int howmany)
+	public void unread(int howmany)
 	{
 		retrievalPosition -= howmany;
 		if (retrievalPosition<0) retrievalPosition=0;

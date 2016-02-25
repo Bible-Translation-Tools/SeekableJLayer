@@ -58,25 +58,25 @@ public class Decoder
 	private boolean					initialized;
 
 	final private int channelChoice;
+    final private boolean spectralContent;
 
 	/**
 	 * Creates a new <code>Decoder</code> instance with default 
 	 * parameters.
 	 */
-
-	public Decoder(int channelChoice)
+	public Decoder(int channelChoice, boolean spectralContent)
 	{
 		this.channelChoice=channelChoice;
+        this.spectralContent=spectralContent;
 	}
 
 	/**
 	 * Decodes one frame from an MPEG audio bitstream.
-	 * 
-	 * @param header		The header describing the frame to decode.
-	 * @param bitstream		The bitstream that provides the bits for the body of the frame. 
+	 *
+	 * @param stream		The bitstream that provides the bits for the body of the frame.
 	 * 
 	 * @return A SampleBuffer containing the decoded samples.
-	 * @throws BitstreamException 
+	 * @throws JavaLayerException
 	 */
 	public Obuffer decodeFrame(Bitstream stream) throws JavaLayerException
 	{
@@ -85,7 +85,14 @@ public class Decoder
 
 		int layer = stream.layer();
 		final FrameDecoder decoder = retrieveDecoder( stream, layer);
-		decoder.decodeFrame();
+		try
+        {
+            decoder.decodeFrame();
+        }
+        catch(ArrayIndexOutOfBoundsException oob)
+        {
+            throw new DecoderOutOfBounds(oob);
+        }
 		return output;
 	}
 
@@ -103,7 +110,7 @@ public class Decoder
 	 * by this decoder. This typically corresponds to the sample
 	 * rate encoded in the MPEG audio stream.
 	 * 
-	 * @param the sample rate (in Hz) of the samples written to the
+	 * @return the sample rate (in Hz) of the samples written to the
 	 *		output buffer when decoding. 
 	 */
 	public int getOutputFrequency() // NO_UCD (unused code)
@@ -163,13 +170,13 @@ public class Decoder
 
 		// set up output buffer if not set up by client.
 		if (output == null)
-			output = new SampleBuffer(header.frequency(), channels);
+			output = new SampleBuffer(channels);
 
-		filter1 = new SynthesisFilter(0);
+		filter1 = new SynthesisFilter(0,spectralContent);
 
 		// REVIEW: allow mono output for stereo
 		if (channels==2) 
-			filter2 = new SynthesisFilter(1);
+			filter2 = new SynthesisFilter(1,spectralContent);
 
 		outputChannels = channels;
 		outputFrequency = header.frequency();
@@ -182,7 +189,7 @@ public class Decoder
 		if (l3decoder!=null) l3decoder.seek_notify();
 		if (l2decoder!=null) l2decoder.seek_notify();
 		if (l1decoder!=null) l1decoder.seek_notify();
-	};
+	}
 
 	public void reset() 
 	{
@@ -190,6 +197,6 @@ public class Decoder
 		l2decoder=null;
 		l1decoder=null;
 		initialized=false;
-	};
+	}
 }
 

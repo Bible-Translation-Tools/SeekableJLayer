@@ -31,7 +31,7 @@ interface FrameDecoder
 {
 	/**
 	 * Decodes one frame of MPEG audio. 
-	 * @throws BitstreamException 
+	 * @throws javazoom.jl.decoder.JavaLayerException
 	 */
 	public void decodeFrame() throws JavaLayerException;
 	/**

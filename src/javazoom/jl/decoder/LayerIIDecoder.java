@@ -600,7 +600,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 
 
 		/**
-		 * @throws BitstreamException 
+		 * @throws JavaLayerException
 		 *
 		 */
 		public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
@@ -612,7 +612,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		}
 
 		/**
-		 * @throws BitstreamException 
+		 * @throws JavaLayerException
 		 *
 		 */
 		public void read_scalefactor_selection (Bitstream stream, Crc16 crc) throws JavaLayerException
@@ -625,7 +625,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		}
 
 		/**
-		 * @throws BitstreamException 
+		 * @throws JavaLayerException
 		 *
 		 */
 		public void read_scalefactor (Bitstream stream) throws JavaLayerException
@@ -656,7 +656,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		}
 
 		/**
-		 * @throws BitstreamException 
+		 * @throws JavaLayerException
 		 *
 		 */
 		public boolean read_sampledata (Bitstream stream) throws JavaLayerException
@@ -703,9 +703,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			return ++groupnumber == 12;
 		}
 
-		/**
-		 *
-		 */
 		public boolean put_next_sample(int channels, SynthesisFilter filter1, SynthesisFilter filter2)
 		{
 			if ((allocation != 0) && (channels != OutputChannels.RIGHT_CHANNEL))
@@ -725,7 +722,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 
 			return  ++samplenumber == 3;
 		}
-	};
+	}
 
 	/**
 	 * Class for layer II subbands in joint stereo mode.
@@ -735,27 +732,17 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		protected int		 channel2_scfsi;
 		protected float 	 channel2_scalefactor1, channel2_scalefactor2, channel2_scalefactor3;
 
-		/**
-		 * Constructor
-		 */
+
 		public SubbandLayer2IntensityStereo (int subbandnumber)
 		{
 			super(subbandnumber);
 		}
 
-		/**
-		 * @throws BitstreamException 
-		 *
-		 */
 		public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
 			super.read_allocation (stream, crc);
 		}
 
-		/**
-		 * @throws BitstreamException 
-		 *
-		 */
 		public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
 			if (allocation != 0)
@@ -770,10 +757,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			}  
 		}
 
-		/**
-		 * @throws BitstreamException 
-		 *
-		 */
 		public void read_scalefactor(Bitstream stream) throws JavaLayerException
 		{
 			if (allocation != 0)
@@ -806,18 +789,11 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 
 		}
 
-		/**
-		 * @throws BitstreamException 
-		 *
-		 */
 		public boolean read_sampledata(Bitstream stream) throws JavaLayerException
 		{
 			return super.read_sampledata (stream);
 		}
 
-		/**
-		 *
-		 */
 		public boolean put_next_sample(int channels, SynthesisFilter filter1, SynthesisFilter filter2)
 		{
 			if (allocation != 0)
@@ -874,7 +850,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			else
 				return false;
 		}
-	};
+	}
 
 	/**
 	 * Class for layer II subbands in stereo mode.
@@ -892,19 +868,12 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		protected float[]	 	channel2_c = {0};
 		protected float[]		channel2_d = {0};
 
-		/**
-		 * Constructor
-		 */
 		public SubbandLayer2Stereo(int subbandnumber)
 		{
 			super(subbandnumber);
 			channel2_samples = new float[3];
 		}
 
-		/**
-		 * @throws BitstreamException 
-		 *
-		 */
 		public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws JavaLayerException
 		{
 			int length = get_allocationlength(header);
@@ -917,10 +886,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			}
 		}
 
-		/**
-		 * @throws BitstreamException 
-		 *
-		 */
 		public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
 			if (allocation != 0)
@@ -937,10 +902,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			}
 		}
 
-		/**
-		 * @throws BitstreamException 
-		 *
-		 */
 		public void read_scalefactor(Bitstream stream) throws JavaLayerException
 		{
 			super.read_scalefactor(stream);
@@ -977,10 +938,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			}
 		}
 
-		/**
-		 * @throws BitstreamException 
-		 *
-		 */
 		public boolean read_sampledata (Bitstream stream) throws JavaLayerException
 		{
 			boolean returnvalue = super.read_sampledata(stream);

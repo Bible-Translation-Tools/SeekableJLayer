@@ -29,16 +29,15 @@ package javazoom.jl.decoder;
  * The <code>SampleBuffer</code> class implements an output buffer
  * that provides storage for a fixed size block of samples. 
  */
-public final class SampleBuffer implements Obuffer
+final class SampleBuffer implements Obuffer
 {
-	// Buffer content
 	private final short[] buffer;
 	// Holds the next pointer for this specific channel
 	private final int[] bufferp;
 	// Number of channels in this buffer
 	private final int channels;
 
-	SampleBuffer(int sample_frequency, int number_of_channels)
+	SampleBuffer(int number_of_channels)
 	{
 		buffer = new short[OBUFFERSIZE];
 		bufferp = new int[MAXCHANNELS];
@@ -50,17 +49,11 @@ public final class SampleBuffer implements Obuffer
 	public void appendSamples(int channel, float[] f)
 	{
 		int pos = bufferp[channel];
-
-		short s;
-		float fs;
 		for (int i=0; i<32;)
 		{
-			fs = f[i++];
-			fs = (fs>32767.0f ? 32767.0f 
-					: (fs < -32767.0f ? -32767.0f : fs));
-
-			s = (short)fs;
-			buffer[pos] = s;
+			float fs = f[i++];
+			fs = (fs>32767.0f ? 32767.0f : (fs < -32767.0f ? -32767.0f : fs));
+			buffer[pos] = (short)fs;
 			pos += channels;
 		}
 		bufferp[channel] = pos;

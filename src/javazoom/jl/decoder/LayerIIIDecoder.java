@@ -1,4 +1,6 @@
 /*
+ * 30/04/14  Speedup of the hybrid call by removing another two useless array copy operations.
+ *           (werner@yellowcouch.org)
  * 11/19/04	 1.0 moved to LGPL.
  * 
  * 18/06/01  Michael Scheerer,  Fixed bugs which causes
@@ -33,27 +35,22 @@
  */
 package javazoom.jl.decoder;
 
-/**
- * Class Implementing Layer 3 Decoder.
- *
- * @since 0.0
- */
 final class LayerIIIDecoder implements FrameDecoder
 {
 	private final static double D43 = 4.0/3.0;
-	private static final float SCALE_FACTOR = 32760;
+	private static final float  SCALE_FACTOR = 32760;
 	private final int[]			scalefac_buffer;
 
 	// MDM: removed, as this wasn't being used.
 	//private float               CheckSumOut1d = 0.0f;
-	private int                 CheckSumHuff = 0;
+    // WVB: Removed tracking of checksum
+	// private int                 CheckSumHuff = 0;
 	private final int[] 		is_1d;
 	private final float[][][]	ro;
 	private final float[][][]	lr;
 	private final float[]		out_1d;
 	private final float[][]		prevblck;
 	private final float[][]		k;
-	private final int[] 		nonzero;
 	private final Bitstream 	stream;
 	private final SynthesisFilter 	filter1, filter2;
 	private final Obuffer 			buffer;
@@ -61,8 +58,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	private BitReserve 				br;
 	private final III_side_info_t 	si;
 
-	private final temporaire2[]        III_scalefac_t;
-	private final temporaire2[]        scalefac;
+    private final Temporaire2[]     scalefac;
 
 	private final int 				max_gr;
 	private int					frame_start;
@@ -76,19 +72,17 @@ final class LayerIIIDecoder implements FrameDecoder
 			SynthesisFilter filtera, SynthesisFilter filterb,
 			Obuffer buffer0, int which_ch0)
 	{
-		HuffcodeTable.inithuff();
 		is_1d = new int[SBLIMIT*SSLIMIT+4];
 		ro = new float[2][SBLIMIT][SSLIMIT];
 		lr = new float[2][SBLIMIT][SSLIMIT];
 		out_1d = new float[SBLIMIT*SSLIMIT];
 		prevblck = new float[2][SBLIMIT*SSLIMIT];
 		k = new float[2][SBLIMIT*SSLIMIT];
-		nonzero = new int[2];
 
 		//III_scalefact_t
-		III_scalefac_t = new temporaire2[2];
-		III_scalefac_t[0] = new temporaire2();
-		III_scalefac_t[1] = new temporaire2();
+        Temporaire2[] III_scalefac_t = new Temporaire2[2];
+		III_scalefac_t[0] = new Temporaire2();
+		III_scalefac_t[1] = new Temporaire2();
 		scalefac = III_scalefac_t;
 		// L3TABLE INIT
 
@@ -178,8 +172,6 @@ final class LayerIIIDecoder implements FrameDecoder
 			for (int j=0; j<576; j++)
 				prevblck[ch][j] = 0.0f;
 
-		nonzero[0] = nonzero[1] = 576;
-
 		br = new BitReserve();
 		si = new III_side_info_t();
 	}
@@ -199,116 +191,113 @@ final class LayerIIIDecoder implements FrameDecoder
 	/**
 	 * Decode one frame, filling the buffer with the output samples.
 	 */
-	public void decodeFrame() throws JavaLayerException
-	{
-		final int nSlots = stream.slots();
-		final int flush_main;
-		int gr, ch, ss, sb, sb18;
-		int main_data_end;
-		int bytes_to_discard;
-		int i;
+    public void decodeFrame() throws JavaLayerException
+    {
+        final int nSlots = stream.slots();
+        final int flush_main;
+        int gr, ch, ss, sb, sb18;
+        int main_data_end;
 
-		get_side_info();
+        get_side_info();
 
-		for (i=0; i<nSlots; i++)
-			br.hputbuf(stream.get_bits(8));
+        for (int i=0; i<nSlots; i++)
+            br.hputbuf(stream.get_bits(8));
 
-		main_data_end = br.hsstell() >>> 3; // of previous frame
+        main_data_end = (br.hsstell() >>> 3); // of previous frame
 
-			if ((flush_main = (br.hsstell() & 7)) != 0) 
-			{
-				br.hgetbits(8 - flush_main);
-				main_data_end++;
-			}
+        if ((flush_main = (br.hsstell() & 7)) != 0)
+        {
+            br.skipBits(8 - flush_main);
+            main_data_end++;
+        }
 
-			bytes_to_discard = frame_start - main_data_end
-					- si.main_data_begin;
+        final int bytes_to_discard = frame_start - main_data_end - si.main_data_begin;
+        frame_start += nSlots;
 
-			frame_start += nSlots;
+        if (bytes_to_discard < 0)
+            return;
 
-			if (bytes_to_discard < 0)
-				return;
+        if (main_data_end > 4096)
+        {
+            frame_start -= 4096;
+            br.rewindNbits(32768);
+        }
 
-			if (main_data_end > 4096) 
-			{
-				frame_start -= 4096;
-				br.rewindNbytes(4096);
-			}
+        if (bytes_to_discard>0)
+            br.skipBits(bytes_to_discard<<3);
 
-			for (; bytes_to_discard > 0; bytes_to_discard--)
-				br.hgetbits(8);
+        for (gr=0;gr<max_gr;gr++)
+        {
+            for (ch=0; ch<channels; ch++)
+            {
+                part2_start = br.hsstell();
 
-			for (gr=0;gr<max_gr;gr++)
-			{
-				for (ch=0; ch<channels; ch++) 
-				{
-					part2_start = br.hsstell();
+                if (stream.version() == Header.MPEG1)
+                    getScaleFactors(ch, gr);
+                else  // MPEG-2 LSF, SZD: MPEG-2.5 LSF
+                    getLsfScaleFactors(ch, gr);
 
-					if (stream.version() == Header.MPEG1)
-						get_scale_factors(ch, gr);
-					else  // MPEG-2 LSF, SZD: MPEG-2.5 LSF
-						get_LSF_scale_factors(ch, gr);
+                final gr_info_s granule = si.ch[ch].gr[gr];
+                final int nonZeroUpTo = huffmanDecode(granule);
+                dequantizeSample(ro[ch], ch, granule, nonZeroUpTo);
+            }
 
-					huffman_decode(ch, gr);
-					dequantize_sample(ro[ch], ch, gr);
-				}
+            stereo(gr);
 
-				stereo(gr);
+            if ((which_channels == OutputChannels.DOWNMIX_CHANNELS) && (channels > 1))
+                do_downmix();
 
-				if ((which_channels == OutputChannels.DOWNMIX_CHANNELS) && (channels > 1))
-					do_downmix();
+            for (ch=first_channel; ch<=last_channel; ch++)
+            {
+                reorder(lr[ch], ch, gr);
+                antialias(ch, gr);
 
-				for (ch=first_channel; ch<=last_channel; ch++)
-				{
-					reorder(lr[ch], ch, gr);
-					antialias(ch, gr);
+                hybrid(ch, gr);
 
-					hybrid(ch, gr);
+                for (sb18=18;sb18<576;sb18+=36) // Frequency inversion
+                    for (ss=1;ss<SSLIMIT;ss+=2)
+                        out_1d[sb18 + ss] = -out_1d[sb18 + ss];
 
-					for (sb18=18;sb18<576;sb18+=36) // Frequency inversion
-						for (ss=1;ss<SSLIMIT;ss+=2)
-							out_1d[sb18 + ss] = -out_1d[sb18 + ss];
-
-					if ((ch == 0) || (which_channels == OutputChannels.RIGHT_CHANNEL)) 
-					{
-						for (ss=0;ss<SSLIMIT;ss++) 
-						{
-							// Polyphase synthesis
-							final float[] samples1 = filter1.samples;
-							sb = 0;
-							for (sb18=0; sb18<576; sb18+=18) 
-							{
-								samples1[sb] = out_1d[sb18+ss] * SCALE_FACTOR;
-								sb++;
-							}
-							filter1.calculate_pcm_samples_layer_iii(buffer);
-						}
-					}
-					else
-					{
-						for (ss=0;ss<SSLIMIT;ss++)
-						{ 
-							// Polyphase synthesis
-							final float[] samples2 = filter2.samples;
-							sb = 0;
-							for (sb18=0; sb18<576; sb18+=18) 
-							{
-								samples2[sb] = out_1d[sb18+ss] * SCALE_FACTOR;
-								sb++;
-							}
-							filter2.calculate_pcm_samples_layer_iii(buffer);
-						}
-					}
-				}	// channels
-			}	// granule
-	}
+                if ((ch == 0) || (which_channels == OutputChannels.RIGHT_CHANNEL))
+                {
+                    for (ss=0;ss<SSLIMIT;ss++)
+                    {
+                        // Polyphase synthesis
+                        final float[] samples1 = filter1.samples;
+                        sb = 0;
+                        for (sb18=0; sb18<576; sb18+=18)
+                        {
+                            samples1[sb] = out_1d[sb18+ss] * SCALE_FACTOR;
+                            sb++;
+                        }
+                        filter1.calculate_pcm_samples_layer_iii(buffer);
+                    }
+                }
+                else
+                {
+                    for (ss=0;ss<SSLIMIT;ss++)
+                    {
+                        // Polyphase synthesis
+                        final float[] samples2 = filter2.samples;
+                        sb = 0;
+                        for (sb18=0; sb18<576; sb18+=18)
+                        {
+                            samples2[sb] = out_1d[sb18+ss] * SCALE_FACTOR;
+                            sb++;
+                        }
+                        filter2.calculate_pcm_samples_layer_iii(buffer);
+                    }
+                }
+            }	// channels
+        }	// granule
+    }
 
 	/**
 	 * Reads the side info from the stream, assuming the entire.
 	 * frame has been read already.
 	 * Mono   : 136 bits (= 17 bytes)
 	 * Stereo : 256 bits (= 32 bytes)
-	 * @throws BitstreamException 
+	 * @throws JavaLayerException
 	 */
 	private boolean get_side_info() throws JavaLayerException
 	{
@@ -431,10 +420,10 @@ final class LayerIIIDecoder implements FrameDecoder
 		return true;
 	}
 
-	private void get_scale_factors(int ch, int gr)
+	private void getScaleFactors(int ch, int gr)
 	{
 		int sfb, window;
-		gr_info_s gr_info = (si.ch[ch].gr[gr]);
+		final gr_info_s gr_info = (si.ch[ch].gr[gr]);
 		int scale_comp   = gr_info.scalefac_compress;
 		int length0      = slen[0][scale_comp];
 		int length1      = slen[1][scale_comp];
@@ -541,8 +530,7 @@ final class LayerIIIDecoder implements FrameDecoder
 
 	private void get_LSF_scale_data(int ch, int gr)
 	{
-
-		int scalefac_comp, int_scalefac_comp;
+		int int_scalefac_comp;
 		int mode_ext = stream.mode_extension();
 		int m;
 		int blocktypenumber;
@@ -550,7 +538,7 @@ final class LayerIIIDecoder implements FrameDecoder
 
 		gr_info_s gr_info = (si.ch[ch].gr[gr]);
 
-		scalefac_comp =  gr_info.scalefac_compress;
+		final int scalefac_comp =  gr_info.scalefac_compress;
 
 		if (gr_info.block_type == 2) {
 			if (gr_info.mixed_block_flag == 0)
@@ -631,95 +619,96 @@ final class LayerIIIDecoder implements FrameDecoder
 			for (int j = 0; j < nr_of_sfb_block[blocknumber][blocktypenumber][i];
 					j++)
 			{
-				scalefac_buffer[m] = (new_slen[i] == 0) ? 0 :
-					br.hgetbits(new_slen[i]);
+				scalefac_buffer[m] = (new_slen[i] == 0) ? 0 : br.hgetbits(new_slen[i]);
 				m++;
 
 			} // for (unint32 j ...
 		} // for (uint32 i ...
 	}
 
-	private void get_LSF_scale_factors(int ch, int gr)
+	private void getLsfScaleFactors(int ch, int gr)
 	{
 		int m = 0;
 		int sfb, window;
-		gr_info_s gr_info = (si.ch[ch].gr[gr]);
-
+		final gr_info_s gr_info = (si.ch[ch].gr[gr]);
 		get_LSF_scale_data(ch, gr);
+        final Temporaire2 scalefac = this.scalefac[ch];
 
 		if ((gr_info.window_switching_flag != 0) && (gr_info.block_type == 2)) {
 			if (gr_info.mixed_block_flag != 0) { 	// MIXED
 				for (sfb = 0; sfb < 8; sfb++)
 				{
-					scalefac[ch].l[sfb] = scalefac_buffer[m];
+					scalefac.l[sfb] = scalefac_buffer[m];
 					m++;
 				}
 				for (sfb = 3; sfb < 12; sfb++) {
 					for (window=0; window<3; window++)
 					{
-						scalefac[ch].s[window][sfb] = scalefac_buffer[m];
+						scalefac.s[window][sfb] = scalefac_buffer[m];
 						m++;
 					}
 				}
 				for (window=0; window<3; window++)
-					scalefac[ch].s[window][12] = 0;
+					scalefac.s[window][12] = 0;
 
 			} else {  // SHORT
 
 				for (sfb = 0; sfb < 12; sfb++) {
 					for (window=0; window<3; window++)
 					{
-						scalefac[ch].s[window][sfb] = scalefac_buffer[m];
+						scalefac.s[window][sfb] = scalefac_buffer[m];
 						m++;
 					}
 				}
 
 				for (window=0; window<3; window++)
-					scalefac[ch].s[window][12] = 0;
+					scalefac.s[window][12] = 0;
 			}
 		} else {   // LONG types 0,1,3
 
 			for (sfb = 0; sfb < 21; sfb++) {
-				scalefac[ch].l[sfb] = scalefac_buffer[m];
+				scalefac.l[sfb] = scalefac_buffer[m];
 				m++;
 			}
-			scalefac[ch].l[21] = 0; // Jeff
-			scalefac[ch].l[22] = 0;
+			scalefac.l[21] = 0; // Jeff
+			scalefac.l[22] = 0;
 		}
 	}
 
-	private final HuffcodeTable.Xyvw xyvw = new HuffcodeTable.Xyvw(); 
-	private void huffman_decode(int ch, int gr)
+	private final HuffcodeTable.Xyvw xyvw = new HuffcodeTable.Xyvw();
+
+    /**
+     * @return how many bytes are valid in is_1d
+     */
+	private int huffmanDecode(final gr_info_s grInfo)
 	{
 		xyvw.x = 0;
 		xyvw.y = 0;
 		xyvw.v = 0;
 		xyvw.w = 0;
 
-		int part2_3_end = part2_start + si.ch[ch].gr[gr].part2_3_length;
+		int part2_3_end = part2_start + grInfo.part2_3_length;
 		int num_bits;
 		int region1Start;
 		int region2Start;
-		int index;
 
 		int buf, buf1;
 
 		HuffcodeTable h;
 
 		// Find region boundary for short block case
-
-		if ( ((si.ch[ch].gr[gr].window_switching_flag) != 0) &&
-				(si.ch[ch].gr[gr].block_type == 2) ) {
-
+        if ( ((grInfo.window_switching_flag) != 0) && (grInfo.block_type == 2) )
+        {
 			// Region2.
 			//MS: Extrahandling for 8KHZ
 			region1Start = (sfreq == 8) ? 72 : 36;  // sfb[9/3]*3=36 or in case 8KHZ = 72
 			region2Start = 576; // No Region2 for short block case
-
-		} else {          // Find region boundary for long block case
-
-			buf = si.ch[ch].gr[gr].region0_count + 1;
-			buf1 = buf + si.ch[ch].gr[gr].region1_count + 1;
+		}
+        else
+        {
+		    // Find region boundary for long block case
+			buf = grInfo.region0_count + 1;
+			buf1 = buf + grInfo.region1_count + 1;
 
 			if(buf1 > sfBandIndex[sfreq].l.length - 1) buf1 = sfBandIndex[sfreq].l.length - 1;
 
@@ -727,33 +716,32 @@ final class LayerIIIDecoder implements FrameDecoder
 			region2Start = sfBandIndex[sfreq].l[buf1]; /* MI */
 		}
 
-		index = 0;
+		int index = 0;
 		// Read bigvalues area
-		for (int i=0; i<(si.ch[ch].gr[gr].big_values<<1); i+=2)
+		for (int i=0; i<(grInfo.big_values<<1); i+=2)
 		{
-			if      (i<region1Start) h = HuffcodeTable.HT[si.ch[ch].gr[gr].table_select[0]];
-			else if (i<region2Start) h = HuffcodeTable.HT[si.ch[ch].gr[gr].table_select[1]];
-			else                     h = HuffcodeTable.HT[si.ch[ch].gr[gr].table_select[2]];
+			if      (i<region1Start) h = HuffcodeTable.HT[grInfo.table_select[0]];
+			else if (i<region2Start) h = HuffcodeTable.HT[grInfo.table_select[1]];
+			else                     h = HuffcodeTable.HT[grInfo.table_select[2]];
 
-			HuffcodeTable.huffman_decoder(h, xyvw, br);
-
+			HuffcodeTable.huffmanDecoder(h, xyvw, br);
 			is_1d[index++] = xyvw.x;
 			is_1d[index++] = xyvw.y;
-			CheckSumHuff = CheckSumHuff + xyvw.x + xyvw.y;
+			//CheckSumHuff = CheckSumHuff + xyvw.x + xyvw.y;
 		}
 
 		// Read count1 area
-		h = HuffcodeTable.HT[si.ch[ch].gr[gr].count1table_select+32];
+		h = HuffcodeTable.HT[grInfo.count1table_select+32];
 		num_bits = br.hsstell();
 
 		while ((num_bits < part2_3_end) && (index < 576))
 		{
-			HuffcodeTable.huffman_decoder(h, xyvw, br);
+			HuffcodeTable.huffmanDecoder(h, xyvw, br);
 			is_1d[index++] = xyvw.v;
 			is_1d[index++] = xyvw.w;
 			is_1d[index++] = xyvw.x;
 			is_1d[index++] = xyvw.y;
-			CheckSumHuff = CheckSumHuff + xyvw.v + xyvw.w + xyvw.x + xyvw.y;
+			//CheckSumHuff = CheckSumHuff + xyvw.v + xyvw.w + xyvw.x + xyvw.y;
 			num_bits = br.hsstell();
 		}
 
@@ -766,21 +754,19 @@ final class LayerIIIDecoder implements FrameDecoder
 
 		// Dismiss stuffing bits
 		if (num_bits < part2_3_end)
-			br.hgetbits(part2_3_end - num_bits);
+			br.skipBits(part2_3_end - num_bits);
 
-		// Zero out rest
-
-		if (index < 576)
-			nonzero[ch] = index;
-		else
-			nonzero[ch] = 576;
-
-		if (index < 0) index = 0;
-
-		// may not be necessary
-		for (; index<576; index++)
-			is_1d[index] = 0;
-	}
+		// Remember up to where we have data
+        if (index < 576)
+        {
+            if (index<0)
+                return 0;
+            else
+                return index;
+        }
+        else
+            return 576;
+    }
 
 	private void i_stereo_k_values(int is_pos, int io_type, int i)
 	{
@@ -796,21 +782,17 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 	}
 
-	private void dequantize_sample(float xr[][], int ch, int gr)
+	private void dequantizeSample(final float xr[][], final int ch, final gr_info_s grInfo, final int nonZeroCh)
 	{
-		gr_info_s gr_info = (si.ch[ch].gr[gr]);
-		int  cb=0;
-		int  next_cb_boundary;
+		int cb=0;
+		int next_cb_boundary;
 		int cb_begin = 0;
 		int cb_width = 0;
-		int  index=0, t_index, j;
-		float g_gain;
-		float[][] xr_1d = xr;
+		int index=0, t_index;
 
-		// choose correct scalefactor band per block type, initalize boundary
-
-		if ((gr_info.window_switching_flag !=0 ) && (gr_info.block_type == 2) ) {
-			if (gr_info.mixed_block_flag != 0)
+        // choose correct scalefactor band per block type, initalize boundary
+		if ((grInfo.window_switching_flag !=0 ) && (grInfo.block_type == 2) ) {
+			if (grInfo.mixed_block_flag != 0)
 				next_cb_boundary=sfBandIndex[sfreq].l[1];  // LONG blocks: 0,1,3
 			else {
 				cb_width = sfBandIndex[sfreq].s[1];
@@ -822,46 +804,50 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 
 		// Compute overall (global) scaling.
+        final float g_gain = (float) Math.pow(2.0 , (0.25 * (grInfo.global_gain - 210.0)));
 
-		g_gain = (float) Math.pow(2.0 , (0.25 * (gr_info.global_gain - 210.0)));
-
-		for (j=0; j<nonzero[ch]; j++)
+		for (int j=0; j<nonZeroCh; j++)
 		{
-			// Modif E.B 02/22/99
-			int reste = j % SSLIMIT;
-			int quotien = (int) ((j-reste)/SSLIMIT);
-			if (is_1d[j] == 0) xr_1d[quotien][reste] = 0.0f;
+            final int reste = j % SSLIMIT;
+			final int quotien = j/SSLIMIT;
+            final int abv = is_1d[j];
+            /**
+             * 40% abv==0
+             * 29% abv<T43length
+             * 29% abv>-T43length
+             */
+            if (abv == 0) xr[quotien][reste] = 0.0f;
 			else
 			{
-				int abv = is_1d[j];
 				// Pow Array fix (11/17/04)
-				if (abv < t_43.length)
+				if (abv < T_43.length)
 				{
-					if (is_1d[j] > 0) xr_1d[quotien][reste] = g_gain * t_43[abv];
+					if (abv > 0) xr[quotien][reste] = g_gain * T_43[abv];
 					else
 					{
-						if (-abv < t_43.length) xr_1d[quotien][reste] = -g_gain * t_43[-abv];
-						else xr_1d[quotien][reste] = -g_gain * (float)Math.pow(-abv, D43);	
+                       final int nabv=-abv;
+						if (nabv < T_43.length) xr[quotien][reste] = -g_gain * T_43[nabv];
+						else xr[quotien][reste] = -g_gain * (float)Math.pow(nabv, D43);
 					} 
 				}
 				else
 				{
-					if (is_1d[j] > 0) xr_1d[quotien][reste] = g_gain * (float)Math.pow(abv, D43);
-					else xr_1d[quotien][reste] = -g_gain * (float)Math.pow(-abv, D43);	         	
+					if (abv > 0) xr[quotien][reste] = g_gain * (float)Math.pow(abv, D43);
+					else xr[quotien][reste] = -g_gain * (float)Math.pow(-abv, D43);
 				}
 			}
 		}
 
 		// apply formula per block type
-		for (j=0; j<nonzero[ch]; j++)
+		for (int j=0; j<nonZeroCh; j++)
 		{
 			// Modif E.B 02/22/99
-			int reste = j % SSLIMIT;
-			int quotien = (int) ((j-reste)/SSLIMIT);
+            final int reste = j % SSLIMIT;
+			final int quotien = j/SSLIMIT;
 
 			if (index == next_cb_boundary)  { /* Adjust critical band boundary */
-				if ((gr_info.window_switching_flag != 0) && (gr_info.block_type == 2)) {
-					if (gr_info.mixed_block_flag != 0)  {
+				if ((grInfo.window_switching_flag != 0) && (grInfo.block_type == 2)) {
+					if (grInfo.mixed_block_flag != 0)  {
 
 						if (index == sfBandIndex[sfreq].l[8])  {
 							next_cb_boundary = sfBandIndex[sfreq].s[4];
@@ -889,7 +875,6 @@ final class LayerIIIDecoder implements FrameDecoder
 									cb_begin;
 							cb_begin = (cb_begin << 2) - cb_begin;
 						}
-
 					} else  {
 
 						next_cb_boundary = sfBandIndex[sfreq].s[(++cb)+1];
@@ -901,30 +886,25 @@ final class LayerIIIDecoder implements FrameDecoder
 								cb_begin;
 						cb_begin = (cb_begin << 2) - cb_begin;
 					}
-
 				} else  { // long blocks
-
 					next_cb_boundary = sfBandIndex[sfreq].l[(++cb)+1];
-
 				}
 			}
 
 			// Do long/short dependent scaling operations
-
-			if ((gr_info.window_switching_flag !=0)&&
-					(((gr_info.block_type == 2) && (gr_info.mixed_block_flag == 0)) ||
-							((gr_info.block_type == 2) && (gr_info.mixed_block_flag!=0) && (j >= 36)) ))
+			if ((grInfo.window_switching_flag !=0)&&
+                    (((grInfo.block_type == 2) && (grInfo.mixed_block_flag == 0)) ||
+                            ((grInfo.block_type == 2) && (grInfo.mixed_block_flag!=0) && (j >= 36)) ))
 			{
-
 				t_index = (index - cb_begin) / cb_width;
 				/*            xr[sb][ss] *= pow(2.0, ((-2.0 * gr_info.subblock_gain[t_index])
 	                                    -(0.5 * (1.0 + gr_info.scalefac_scale)
 				 * scalefac[ch].s[t_index][cb]))); */
 				int idx = scalefac[ch].s[t_index][cb]
-						<< gr_info.scalefac_scale;
-				idx += (gr_info.subblock_gain[t_index] << 2);
+						<< grInfo.scalefac_scale;
+				idx += (grInfo.subblock_gain[t_index] << 2);
 
-				xr_1d[quotien][reste] *= two_to_negative_half_pow[idx];
+				xr[quotien][reste] *= two_to_negative_half_pow[idx];
 
 			} else {   // LONG block types 0,1,3 & 1st 2 subbands of switched blocks
 				/*				xr[sb][ss] *= pow(2.0, -0.5 * (1.0+gr_info.scalefac_scale)
@@ -932,38 +912,55 @@ final class LayerIIIDecoder implements FrameDecoder
 														 + gr_info.preflag * pretab[cb])); */
 				int idx = scalefac[ch].l[cb];
 
-				if (gr_info.preflag != 0)
+				if (grInfo.preflag != 0)
 					idx += pretab[cb];
 
-				idx = idx << gr_info.scalefac_scale;
-				xr_1d[quotien][reste] *= two_to_negative_half_pow[idx];
+				idx = idx << grInfo.scalefac_scale;
+				xr[quotien][reste] *= two_to_negative_half_pow[idx];
 			}
 			index++;
 		}
 
-		for (j=nonzero[ch]; j<576; j++)
+		// Clear the remainder of the data
+		for (int j=nonZeroCh; j<576; j++)
 		{
-			// Modif E.B 02/22/99
-			int reste = j % SSLIMIT;
-			int quotien = (int) ((j-reste)/SSLIMIT);
-			if(reste < 0) reste = 0;
-			if(quotien < 0) quotien = 0;
-			xr_1d[quotien][reste] = 0.0f;
+            /**
+             * Another gem of incompetence by E.B. Was written as
+
+             // Modif E.B 02/22/99
+             int reste = j % SSLIMIT;
+             int quotien = (j-reste)/SSLIMIT;
+             if(reste < 0) reste = 0;
+             if(quotien < 0) quotien = 0;
+
+             it is unnecessary to subtracte reste from j before division
+             The % is however not a very fast operation, so clearing
+             the array could be done by adding a second innerloop. At the
+             moment I just removed the quotien idiocy.
+
+             Then the question is how reste or quotien can even be smaller
+             than zero
+
+             Whether it is smart to have a double array for xr is not sure yet
+             converting that to a linear piece might require some more work
+             than I might want at the moment.
+             */
+			final int reste = j % SSLIMIT;
+            final int quotien = j/SSLIMIT;
+			xr[quotien][reste] = 0.0f;
 		}
+    }
 
-		return;
-	}
-
-	private void reorder(float xr[][], int ch, int gr)
+	private void reorder(final float xr[][], int ch, int gr)
 	{
-		gr_info_s gr_info = (si.ch[ch].gr[gr]);
+		gr_info_s gr_info = si.ch[ch].gr[gr];
 		int freq, freq3;
 		int index;
 		int sfb, sfb_start, sfb_lines;
 		int src_line, des_line;
-		float[][] xr_1d = xr;
 
-		if ((gr_info.window_switching_flag !=0) && (gr_info.block_type == 2)) {
+        // long blocks
+        if ((gr_info.window_switching_flag !=0) && (gr_info.block_type == 2)) {
 
 			for(index=0; index<576; index++)
 				out_1d[index] = 0.0f;
@@ -973,9 +970,9 @@ final class LayerIIIDecoder implements FrameDecoder
 				for (index = 0; index < 36; index++)
 				{
 					// Modif E.B 02/22/99
-					int reste = index % SSLIMIT;
-					int quotien = (int) ((index-reste)/SSLIMIT);
-					out_1d[index] = xr_1d[quotien][reste];
+                    final int reste = index % SSLIMIT;
+					final int quotien = index/SSLIMIT;
+					out_1d[index] = xr[quotien][reste];
 				}
 				// REORDERING FOR REST SWITCHED SHORT
 				/*for( sfb=3,sfb_start=sfBandIndex[sfreq].s[3],
@@ -997,23 +994,23 @@ final class LayerIIIDecoder implements FrameDecoder
 						des_line = sfb_start3 + freq3;
 						// Modif E.B 02/22/99
 						int reste = src_line % SSLIMIT;
-						int quotien = (int) ((src_line-reste)/SSLIMIT);
+						int quotien = src_line/SSLIMIT;
 
-						out_1d[des_line] = xr_1d[quotien][reste];
+						out_1d[des_line] = xr[quotien][reste];
 						src_line += sfb_lines;
 						des_line++;
 
 						reste = src_line % SSLIMIT;
-						quotien = (int) ((src_line-reste)/SSLIMIT);
+						quotien = (src_line-reste)/SSLIMIT;
 
-						out_1d[des_line] = xr_1d[quotien][reste];
+						out_1d[des_line] = xr[quotien][reste];
 						src_line += sfb_lines;
 						des_line++;
 
 						reste = src_line % SSLIMIT;
-						quotien = (int) ((src_line-reste)/SSLIMIT);
+						quotien = (src_line-reste)/SSLIMIT;
 
-						out_1d[des_line] = xr_1d[quotien][reste];
+						out_1d[des_line] = xr[quotien][reste];
 					}
 				}
 
@@ -1021,21 +1018,19 @@ final class LayerIIIDecoder implements FrameDecoder
 				for(index=0;index<576;index++)
 				{
 					int j = reorder_table[sfreq][index];
-					int reste = j % SSLIMIT;
-					int quotien = (int) ((j-reste)/SSLIMIT);
-					out_1d[index] = xr_1d[quotien][reste];
+					final int reste = j % SSLIMIT;
+					final int quotien = j/SSLIMIT;
+					out_1d[index] = xr[quotien][reste];
 				}
 			}
 		}
-		else {   // long blocks
-			for(index=0; index<576; index++)
-			{
-				// Modif E.B 02/22/99
-				int reste = index % SSLIMIT;
-				int quotien = (int) ((index-reste)/SSLIMIT);
-				out_1d[index] = xr_1d[quotien][reste];
-			}
-		}
+        else
+            for (index = 0; index < 576; index++) {
+                // Modif E.B 02/22/99
+                final int reste = index % SSLIMIT;
+                final int quotien = index / SSLIMIT;
+                out_1d[index] = xr[quotien][reste];
+            }
 	}
 
 	private final int[] is_pos = new int[576];
@@ -1044,7 +1039,6 @@ final class LayerIIIDecoder implements FrameDecoder
 	private void stereo(int gr)
 	{
 		int sb, ss;
-
 		if  (channels == 1) 
 		{
 			// mono , bypass xr[0][][] to lr[0][][]
@@ -1099,7 +1093,6 @@ final class LayerIIIDecoder implements FrameDecoder
 										sfb = -10;
 										lines = -10;
 									}
-
 									lines--;
 									i--;
 
@@ -1310,7 +1303,7 @@ final class LayerIIIDecoder implements FrameDecoder
 							lr[0][sb][ss] = ro[0][sb][ss] * k[0][i];
 							lr[1][sb][ss] = ro[0][sb][ss] * k[1][i];
 						} else {
-							lr[1][sb][ss] = ro[0][sb][ss] / (float) (1 + is_ratio[i]);
+							lr[1][sb][ss] = ro[0][sb][ss] / (1 + is_ratio[i]);
 							lr[0][sb][ss] = lr[1][sb][ss] * is_ratio[i];
 						}
 					}
@@ -1327,15 +1320,15 @@ final class LayerIIIDecoder implements FrameDecoder
 		// with 8 butterflies between each pair
 
 		if  ((gr_info.window_switching_flag !=0) && (gr_info.block_type == 2) &&
-				!(gr_info.mixed_block_flag != 0) )
+                gr_info.mixed_block_flag == 0)
 			return;
 
 		if ((gr_info.window_switching_flag !=0) && (gr_info.mixed_block_flag != 0)&&
-				(gr_info.block_type == 2)) {
-			sb18lim = 18;
-		} else {
-			sb18lim = 558;
-		}
+				(gr_info.block_type == 2))
+            sb18lim = 18;
+		 else
+            sb18lim = 558;
+
 
 		for (sb18=0; sb18 < sb18lim; sb18+=18) {
 			for (ss=0;ss<8;ss++) {
@@ -1349,76 +1342,56 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 	}
 
-	// MDM: tsOutCopy and rawout do not need initializing, so the arrays
-	// can be reused.
-	private final float[] tsOutCopy = new float[18];
 	private final float[] rawout = new float[36];
 
 	private void hybrid(int ch, int gr)
 	{
 		int bt;
 		int sb18;
-		gr_info_s gr_info = (si.ch[ch].gr[gr]);
-		float[] tsOut;
-
-		float[][] prvblk;
+		gr_info_s grInfo = (si.ch[ch].gr[gr]);
 
 		for(sb18=0;sb18<576;sb18+=18)
 		{
-			bt = ((gr_info.window_switching_flag !=0 ) && (gr_info.mixed_block_flag !=0) &&
-					(sb18 < 36)) ? 0 : gr_info.block_type;
+			bt = ((grInfo.window_switching_flag !=0 ) && (grInfo.mixed_block_flag !=0) &&
+					(sb18 < 36)) ? 0 : grInfo.block_type;
 
-			tsOut = out_1d;
+            final float[] tsOut = out_1d;
+
+            /**
+             * WVB: Originally the following was written
+             *
+
 			// Modif E.B 02/22/99
+
 			for (int cc = 0;cc<18;cc++)
 				tsOutCopy[cc] = tsOut[cc+sb18];
 
-			inv_mdct(tsOutCopy, rawout, bt);
-
+			fastInvMdct(tsOutCopy, rawout, bt);
 
 			for (int cc = 0;cc<18;cc++)
 				tsOut[cc+sb18] = tsOutCopy[cc];
 			// Fin Modif
 
-			// overlap addition
-			prvblk = prevblck;
+             * which is a copy from the tsOut to the tsOutCopy array, so that the indices
+             * for the fastInvMdct are like in C. The inc_mdct routine changes its 'in' parameter
+             * therefre E.B restored it by copying the tsOutCopy back to tsOut.. However he
+             * seems to have forgotten that directly after the copy is restored, the
+             * tsOut array is overwritten in the horendous block below.
+             * Therefore. We currently make the copy (nd will see whether we can get rid of it
+             * later), but do not restore it.
+             */
 
-			tsOut[0 + sb18]   = rawout[0]  + prvblk[ch][sb18 + 0];
-			prvblk[ch][sb18 + 0]  = rawout[18];
-			tsOut[1 + sb18]   = rawout[1]  + prvblk[ch][sb18 + 1];
-			prvblk[ch][sb18 + 1]  = rawout[19];
-			tsOut[2 + sb18]   = rawout[2]  + prvblk[ch][sb18 + 2];
-			prvblk[ch][sb18 + 2]  = rawout[20];
-			tsOut[3 + sb18]   = rawout[3]  + prvblk[ch][sb18 + 3];
-			prvblk[ch][sb18 + 3]  = rawout[21];
-			tsOut[4 + sb18]   = rawout[4]  + prvblk[ch][sb18 + 4];
-			prvblk[ch][sb18 + 4]  = rawout[22];
-			tsOut[5 + sb18]   = rawout[5]  + prvblk[ch][sb18 + 5];
-			prvblk[ch][sb18 + 5]  = rawout[23];
-			tsOut[6 + sb18]   = rawout[6]  + prvblk[ch][sb18 + 6];
-			prvblk[ch][sb18 + 6]  = rawout[24];
-			tsOut[7 + sb18]   = rawout[7]  + prvblk[ch][sb18 + 7];
-			prvblk[ch][sb18 + 7]  = rawout[25];
-			tsOut[8 + sb18]   = rawout[8]  + prvblk[ch][sb18 + 8];
-			prvblk[ch][sb18 + 8]  = rawout[26];
-			tsOut[9 + sb18]   = rawout[9]  + prvblk[ch][sb18 + 9];
-			prvblk[ch][sb18 + 9]  = rawout[27];
-			tsOut[10 + sb18]  = rawout[10] + prvblk[ch][sb18 + 10];
-			prvblk[ch][sb18 + 10] = rawout[28];
-			tsOut[11 + sb18]  = rawout[11] + prvblk[ch][sb18 + 11];
-			prvblk[ch][sb18 + 11] = rawout[29];
-			tsOut[12 + sb18]  = rawout[12] + prvblk[ch][sb18 + 12];
-			prvblk[ch][sb18 + 12] = rawout[30];
-			tsOut[13 + sb18]  = rawout[13] + prvblk[ch][sb18 + 13];
-			prvblk[ch][sb18 + 13] = rawout[31];
-			tsOut[14 + sb18]  = rawout[14] + prvblk[ch][sb18 + 14];
-			prvblk[ch][sb18 + 14] = rawout[32];
-			tsOut[15 + sb18]  = rawout[15] + prvblk[ch][sb18 + 15];
-			prvblk[ch][sb18 + 15] = rawout[33];
-			tsOut[16 + sb18]  = rawout[16] + prvblk[ch][sb18 + 16];
-			prvblk[ch][sb18 + 16] = rawout[34];
-			tsOut[17 + sb18]  = rawout[17] + prvblk[ch][sb18 + 17];
-			prvblk[ch][sb18 + 17] = rawout[35];
+            fastInvMdct(tsOut, sb18, rawout, bt);
+
+            // overlap addition
+			final float[] prvblkCh = prevblck[ch];
+
+            for(int cc=0;cc<18;++cc)
+            {
+                final int sb18cc=sb18+cc;
+                tsOut[sb18cc] = rawout[cc] + prvblkCh[sb18cc];
+                prvblkCh[sb18cc] = rawout[18+cc];
+            }
 		}
 	}
 
@@ -1434,81 +1407,25 @@ final class LayerIIIDecoder implements FrameDecoder
 	}
 
 	/**
-	 * Fast INV_MDCT.
+     * @param in can be modified
 	 */
-	private void inv_mdct(float[] in, float[] out, int block_type)
+	private void fastInvMdct(float[] in, final int sb18, float[] out, int block_type)
 	{
-		float[] win_bt;
-		int   i;
-
 		float tmpf_0, tmpf_1, tmpf_2, tmpf_3, tmpf_4, tmpf_5, tmpf_6, tmpf_7, tmpf_8, tmpf_9;
 		float tmpf_10, tmpf_11, tmpf_12, tmpf_13, tmpf_14, tmpf_15, tmpf_16, tmpf_17;
 
-		tmpf_0 = tmpf_1 = tmpf_2 = tmpf_3 = tmpf_4 = tmpf_5 = tmpf_6 = tmpf_7 = tmpf_8 = tmpf_9 =
-				tmpf_10 = tmpf_11 = tmpf_12 = tmpf_13 = tmpf_14 = tmpf_15 = tmpf_16 = tmpf_17 = 0.0f;
-
-
-
-		if(block_type == 2)
+        if(block_type == 2)
 		{
-
-			/*
-			 *
-			 *		Under MicrosoftVM 2922, This causes a GPF, or
-			 *		At best, an ArrayIndexOutOfBoundsExceptin.
-			for(int p=0;p<36;p+=9)
-		   {
-		   	  out[p]   = out[p+1] = out[p+2] = out[p+3] =
-		      out[p+4] = out[p+5] = out[p+6] = out[p+7] =
-		      out[p+8] = 0.0f;
-		   }
-			 */
-			out[0] = 0.0f;
-			out[1] = 0.0f;
-			out[2] = 0.0f;
-			out[3] = 0.0f;
-			out[4] = 0.0f;
-			out[5] = 0.0f;
-			out[6] = 0.0f;
-			out[7] = 0.0f;
-			out[8] = 0.0f;
-			out[9] = 0.0f;
-			out[10] = 0.0f;
-			out[11] = 0.0f;
-			out[12] = 0.0f;
-			out[13] = 0.0f;
-			out[14] = 0.0f;
-			out[15] = 0.0f;
-			out[16] = 0.0f;
-			out[17] = 0.0f;
-			out[18] = 0.0f;
-			out[19] = 0.0f;
-			out[20] = 0.0f;
-			out[21] = 0.0f;
-			out[22] = 0.0f;
-			out[23] = 0.0f;
-			out[24] = 0.0f;
-			out[25] = 0.0f;
-			out[26] = 0.0f;
-			out[27] = 0.0f;
-			out[28] = 0.0f;
-			out[29] = 0.0f;
-			out[30] = 0.0f;
-			out[31] = 0.0f;
-			out[32] = 0.0f;
-			out[33] = 0.0f;
-			out[34] = 0.0f;
-			out[35] = 0.0f;
-
-			int six_i = 0;
-
-			for(i=0;i<3;i++)
+            for(int j=0;j<36;++j)
+                out[j]=0f;
+            final int threeFurther=sb18+3;
+			for(int i=sb18, sixI=0;i<threeFurther;i++)
 			{
 				// 12 point IMDCT
 				// Begin 12 point IDCT
 				// Input aliasing for 12 pt IDCT
-				in[15+i] += in[12+i]; in[12+i] += in[9+i]; in[9+i]  +=  in[6+i];
-				in[6+i]  += in[3+i];  in[3+i]  += in[0+i];
+                in[15+i] += in[12+i]; in[12+i] += in[9+i]; in[9+i] += in[6+i];
+                in[6+i]  += in[3+i];  in[3+i]  += in[i];
 
 				// Input aliasing on odd indices (for 6 point IDCT)
 				in[15+i] += in[9+i];  in[9+i]  += in[3+i];
@@ -1517,8 +1434,8 @@ final class LayerIIIDecoder implements FrameDecoder
 				float 	pp1, pp2, sum;
 				pp2 = in[12+i] * 0.500000000f;
 				pp1 = in[ 6+i] * 0.866025403f;
-				sum = in[0+i] + pp2;
-				tmpf_1 = in[0+i] - in[12+i];
+				sum = in[i] + pp2;
+				tmpf_1 = in[i] - in[12+i];
 				tmpf_0 = sum + pp1;
 				tmpf_2 = sum - pp1;
 
@@ -1550,7 +1467,6 @@ final class LayerIIIDecoder implements FrameDecoder
 
 				// End 6 point IDCT
 				// Twiddle factors on indices (for 12 point IDCT)
-
 				tmpf_0  *=  0.504314480f;
 				tmpf_1  *=  0.541196100f;
 				tmpf_2  *=  0.630236207f;
@@ -1578,36 +1494,58 @@ final class LayerIIIDecoder implements FrameDecoder
 
 				tmpf_0 *= 0.130526192f;
 
-				out[six_i + 6]  += tmpf_0;
-				out[six_i + 7]  += tmpf_1;
-				out[six_i + 8]  += tmpf_2;
-				out[six_i + 9]  += tmpf_3;
-				out[six_i + 10] += tmpf_4;
-				out[six_i + 11] += tmpf_5;
-				out[six_i + 12] += tmpf_6;
-				out[six_i + 13] += tmpf_7;
-				out[six_i + 14] += tmpf_8;
-				out[six_i + 15] += tmpf_9;
-				out[six_i + 16] += tmpf_10;
-				out[six_i + 17] += tmpf_11;
+				out[sixI + 6]  += tmpf_0;
+				out[sixI + 7]  += tmpf_1;
+				out[sixI + 8]  += tmpf_2;
+				out[sixI + 9]  += tmpf_3;
+				out[sixI + 10] += tmpf_4;
+				out[sixI + 11] += tmpf_5;
+				out[sixI + 12] += tmpf_6;
+				out[sixI + 13] += tmpf_7;
+				out[sixI + 14] += tmpf_8;
+				out[sixI + 15] += tmpf_9;
+				out[sixI + 16] += tmpf_10;
+				out[sixI + 17] += tmpf_11;
 
-				six_i += 6;
+				sixI += 6;
 			}
 		}
 		else
 		{
+            // WVB - Because the interconnection of the butterfly is fairly hardcoded, it makes
+            // sense to copy the relevant entries in local variables. Then we don't need to index
+            // the input array all too often.
+            float in0=in[sb18];
+            float in1=in[sb18+1];
+            float in2=in[sb18+2];
+            float in3=in[sb18+3];
+            float in4=in[sb18+4];
+            float in5=in[sb18+5];
+            float in6=in[sb18+6];
+            float in7=in[sb18+7];
+            float in8=in[sb18+8];
+            float in9=in[sb18+9];
+            float in10=in[sb18+10];
+            float in11=in[sb18+11];
+            float in12=in[sb18+12];
+            float in13=in[sb18+13];
+            float in14=in[sb18+14];
+            float in15=in[sb18+15];
+            float in16=in[sb18+16];
+            float in17=in[sb18+17];
+
 			// 36 point IDCT
 			// input aliasing for 36 point IDCT
-			in[17]+=in[16]; in[16]+=in[15]; in[15]+=in[14]; in[14]+=in[13];
-			in[13]+=in[12]; in[12]+=in[11]; in[11]+=in[10]; in[10]+=in[9];
-			in[9] +=in[8];  in[8] +=in[7];  in[7] +=in[6];  in[6] +=in[5];
-			in[5] +=in[4];  in[4] +=in[3];  in[3] +=in[2];  in[2] +=in[1];
-			in[1] +=in[0];
+			in17+=in16; in16+=in15; in15+=in14; in14+=in13;
+			in13+=in12; in12+=in11; in11+=in10; in10+=in9;
+			in9 +=in8;  in8 +=in7;  in7 +=in6;  in6 +=in5;
+			in5 +=in4;  in4 +=in3;  in3 +=in2;  in2 +=in1;
+			in1 +=in0;
 
 			// 18 point IDCT for odd indices
 			// input aliasing for 18 point IDCT
-			in[17]+=in[15]; in[15]+=in[13]; in[13]+=in[11]; in[11]+=in[9];
-			in[9] +=in[7];  in[7] +=in[5];  in[5] +=in[3];  in[3] +=in[1];
+			in17+=in15; in15+=in13; in13+=in11; in11+=in9;
+			in9 +=in7;  in7 +=in5;  in5 +=in3;  in3 +=in1;
 
 			float tmp0,tmp1,tmp2,tmp3,tmp4,tmp0_,tmp1_,tmp2_,tmp3_;
 			float tmp0o,tmp1o,tmp2o,tmp3o,tmp4o,tmp0_o,tmp1_o,tmp2_o,tmp3_o;
@@ -1619,48 +1557,48 @@ final class LayerIIIDecoder implements FrameDecoder
 			//         http://www.iro.umontreal.ca/~boyerf
 			//
 			// The code has been optimized for Intel processors
-			//  (takes a lot of time to convert float to and from iternal FPU representation)
+			//  (takes a lot of time to convert float to and from internal FPU representation)
 			//
 			// It is a simple "factorization" of the IDCT matrix.
 
 			// 9 point IDCT on even indices
 
 			// 5 points on odd indices (not realy an IDCT)
-			float i00 = in[0]+in[0];
-			float iip12 = i00 + in[12];
+			float i00 = in0+in0;
+			float iip12 = i00 + in12;
 
-			tmp0 = iip12 + in[4]*1.8793852415718f  + in[8]*1.532088886238f   + in[16]*0.34729635533386f;
-			tmp1 = i00    + in[4]                   - in[8] - in[12] - in[12] - in[16];
-			tmp2 = iip12 - in[4]*0.34729635533386f - in[8]*1.8793852415718f  + in[16]*1.532088886238f;
-			tmp3 = iip12 - in[4]*1.532088886238f   + in[8]*0.34729635533386f - in[16]*1.8793852415718f;
-			tmp4 = in[0] - in[4]                   + in[8] - in[12]          + in[16];
+			tmp0 = iip12 + in4*1.8793852415718f  + in8*1.532088886238f   + in16*0.34729635533386f;
+			tmp1 = i00    + in4                   - in8 - in12 - in12 - in16;
+			tmp2 = iip12 - in4*0.34729635533386f - in8*1.8793852415718f  + in16*1.532088886238f;
+			tmp3 = iip12 - in4*1.532088886238f   + in8*0.34729635533386f - in16*1.8793852415718f;
+			tmp4 = in0 - in4                   + in8 - in12          + in16;
 
 			// 4 points on even indices
-			float i66_ = in[6]*1.732050808f;		// Sqrt[3]
+			float i66_ = in6*1.732050808f;		// Sqrt[3]
 
-			tmp0_ = in[2]*1.9696155060244f  + i66_ + in[10]*1.2855752193731f  + in[14]*0.68404028665134f;
-			tmp1_ = (in[2]                        - in[10]                   - in[14])*1.732050808f;
-			tmp2_ = in[2]*1.2855752193731f  - i66_ - in[10]*0.68404028665134f + in[14]*1.9696155060244f;
-			tmp3_ = in[2]*0.68404028665134f - i66_ + in[10]*1.9696155060244f  - in[14]*1.2855752193731f;
+			tmp0_ = in2*1.9696155060244f  + i66_ + in10*1.2855752193731f  + in14*0.68404028665134f;
+			tmp1_ = (in2                        - in10                   - in14)*1.732050808f;
+			tmp2_ = in2*1.2855752193731f  - i66_ - in10*0.68404028665134f + in14*1.9696155060244f;
+			tmp3_ = in2*0.68404028665134f - i66_ + in10*1.9696155060244f  - in14*1.2855752193731f;
 
 			// 9 point IDCT on odd indices
 			// 5 points on odd indices (not realy an IDCT)
-			float i0 = in[0+1]+in[0+1];
-			float i0p12 = i0 + in[12+1];
+			float i0 = in1+in1;
+			float i0p12 = i0 + in13;
 
-			tmp0o = i0p12   + in[4+1]*1.8793852415718f  + in[8+1]*1.532088886238f       + in[16+1]*0.34729635533386f;
-			tmp1o = i0      + in[4+1]                   - in[8+1] - in[12+1] - in[12+1] - in[16+1];
-			tmp2o = i0p12   - in[4+1]*0.34729635533386f - in[8+1]*1.8793852415718f      + in[16+1]*1.532088886238f;
-			tmp3o = i0p12   - in[4+1]*1.532088886238f   + in[8+1]*0.34729635533386f     - in[16+1]*1.8793852415718f;
-			tmp4o = (in[0+1] - in[4+1]                   + in[8+1] - in[12+1]            + in[16+1])*0.707106781f; // Twiddled
+			tmp0o = i0p12   + in5*1.8793852415718f  + in9*1.532088886238f       + in17*0.34729635533386f;
+			tmp1o = i0      + in5                   - in9 - in13 - in13 - in17;
+			tmp2o = i0p12   - in5*0.34729635533386f - in9*1.8793852415718f      + in17*1.532088886238f;
+			tmp3o = i0p12   - in5*1.532088886238f   + in9*0.34729635533386f     - in17*1.8793852415718f;
+			tmp4o = (in1 - in5                   + in9 - in13            + in17)*0.707106781f; // Twiddled
 
 			// 4 points on even indices
-			float i6_ = in[6+1]*1.732050808f;		// Sqrt[3]
+			float i6_ = in7*1.732050808f;		// Sqrt[3]
 
-			tmp0_o = in[2+1]*1.9696155060244f  + i6_ + in[10+1]*1.2855752193731f  + in[14+1]*0.68404028665134f;
-			tmp1_o = (in[2+1]                        - in[10+1]                   - in[14+1])*1.732050808f;
-			tmp2_o = in[2+1]*1.2855752193731f  - i6_ - in[10+1]*0.68404028665134f + in[14+1]*1.9696155060244f;
-			tmp3_o = in[2+1]*0.68404028665134f - i6_ + in[10+1]*1.9696155060244f  - in[14+1]*1.2855752193731f;
+			tmp0_o = in3*1.9696155060244f  + i6_ + in11*1.2855752193731f  + in15*0.68404028665134f;
+			tmp1_o = (in3                        - in11                   - in15)*1.732050808f;
+			tmp2_o = in3*1.2855752193731f  - i6_ - in11*0.68404028665134f + in15*1.9696155060244f;
+			tmp3_o = in3*0.68404028665134f - i6_ + in11*1.9696155060244f  - in15*1.2855752193731f;
 
 			// Twiddle factors on odd indices
 			// and
@@ -1681,52 +1619,49 @@ final class LayerIIIDecoder implements FrameDecoder
 
 			// end 36 point IDCT */
 			// shift to modified IDCT
-			win_bt = win[block_type];
+			final float[] winBlockType = WIN[block_type];
 
-			out[0] =-tmpf_9  * win_bt[0];
-			out[1] =-tmpf_10 * win_bt[1];
-			out[2] =-tmpf_11 * win_bt[2];
-			out[3] =-tmpf_12 * win_bt[3];
-			out[4] =-tmpf_13 * win_bt[4];
-			out[5] =-tmpf_14 * win_bt[5];
-			out[6] =-tmpf_15 * win_bt[6];
-			out[7] =-tmpf_16 * win_bt[7];
-			out[8] =-tmpf_17 * win_bt[8];
-			out[9] = tmpf_17 * win_bt[9];
-			out[10]= tmpf_16 * win_bt[10];
-			out[11]= tmpf_15 * win_bt[11];
-			out[12]= tmpf_14 * win_bt[12];
-			out[13]= tmpf_13 * win_bt[13];
-			out[14]= tmpf_12 * win_bt[14];
-			out[15]= tmpf_11 * win_bt[15];
-			out[16]= tmpf_10 * win_bt[16];
-			out[17]= tmpf_9  * win_bt[17];
-			out[18]= tmpf_8  * win_bt[18];
-			out[19]= tmpf_7  * win_bt[19];
-			out[20]= tmpf_6  * win_bt[20];
-			out[21]= tmpf_5  * win_bt[21];
-			out[22]= tmpf_4  * win_bt[22];
-			out[23]= tmpf_3  * win_bt[23];
-			out[24]= tmpf_2  * win_bt[24];
-			out[25]= tmpf_1  * win_bt[25];
-			out[26]= tmpf_0  * win_bt[26];
-			out[27]= tmpf_0  * win_bt[27];
-			out[28]= tmpf_1  * win_bt[28];
-			out[29]= tmpf_2  * win_bt[29];
-			out[30]= tmpf_3  * win_bt[30];
-			out[31]= tmpf_4  * win_bt[31];
-			out[32]= tmpf_5  * win_bt[32];
-			out[33]= tmpf_6  * win_bt[33];
-			out[34]= tmpf_7  * win_bt[34];
-			out[35]= tmpf_8  * win_bt[35];
+			out[0] =-tmpf_9  * winBlockType[0];
+			out[1] =-tmpf_10 * winBlockType[1];
+			out[2] =-tmpf_11 * winBlockType[2];
+			out[3] =-tmpf_12 * winBlockType[3];
+			out[4] =-tmpf_13 * winBlockType[4];
+			out[5] =-tmpf_14 * winBlockType[5];
+			out[6] =-tmpf_15 * winBlockType[6];
+			out[7] =-tmpf_16 * winBlockType[7];
+			out[8] =-tmpf_17 * winBlockType[8];
+			out[9] = tmpf_17 * winBlockType[9];
+			out[10]= tmpf_16 * winBlockType[10];
+			out[11]= tmpf_15 * winBlockType[11];
+			out[12]= tmpf_14 * winBlockType[12];
+			out[13]= tmpf_13 * winBlockType[13];
+			out[14]= tmpf_12 * winBlockType[14];
+			out[15]= tmpf_11 * winBlockType[15];
+			out[16]= tmpf_10 * winBlockType[16];
+			out[17]= tmpf_9  * winBlockType[17];
+			out[18]= tmpf_8  * winBlockType[18];
+			out[19]= tmpf_7  * winBlockType[19];
+			out[20]= tmpf_6  * winBlockType[20];
+			out[21]= tmpf_5  * winBlockType[21];
+			out[22]= tmpf_4  * winBlockType[22];
+			out[23]= tmpf_3  * winBlockType[23];
+			out[24]= tmpf_2  * winBlockType[24];
+			out[25]= tmpf_1  * winBlockType[25];
+			out[26]= tmpf_0  * winBlockType[26];
+			out[27]= tmpf_0  * winBlockType[27];
+			out[28]= tmpf_1  * winBlockType[28];
+			out[29]= tmpf_2  * winBlockType[29];
+			out[30]= tmpf_3  * winBlockType[30];
+			out[31]= tmpf_4  * winBlockType[31];
+			out[32]= tmpf_5  * winBlockType[32];
+			out[33]= tmpf_6  * winBlockType[33];
+			out[34]= tmpf_7  * winBlockType[34];
+			out[35]= tmpf_8  * winBlockType[35];
 		}
 	}
 
 	private static final int		SSLIMIT=18;
 	private static final int		SBLIMIT=32;
-	// Size of the table of whole numbers raised to 4/3 power.
-	// This may be adjusted for performance without any problems.
-	//public static final int 	POW_TABLE_LIMIT=512;
 
 	/************************************************************/
 	/*                            L3TABLE                       */
@@ -1745,29 +1680,20 @@ final class LayerIIIDecoder implements FrameDecoder
 
 	private static class gr_info_s
 	{
-		public int 		part2_3_length = 0;
-		public int 		big_values = 0;
-		public int 		global_gain = 0;
-		public int 		scalefac_compress = 0;
-		public int 		window_switching_flag = 0;
-		public int 		block_type = 0;
-		public int 		mixed_block_flag = 0;
-		public int[]	table_select;
-		public int[]	subblock_gain;
-		public int 		region0_count = 0;
-		public int 		region1_count = 0;
-		public int 		preflag = 0;
-		public int 		scalefac_scale = 0;
-		public int 		count1table_select = 0;
-
-		/**
-		 * Dummy Constructor
-		 */
-		public gr_info_s()
-		{
-			table_select = new int[3];
-			subblock_gain = new int[3];
-		}
+		public int 		   part2_3_length = 0;
+		public int 		   big_values = 0;
+		public int 		   global_gain = 0;
+		public int 		   scalefac_compress = 0;
+		public int 		   window_switching_flag = 0;
+		public int 		   block_type = 0;
+		public int 		   mixed_block_flag = 0;
+		public final int[] table_select= new int[3];
+		public final int[] subblock_gain = new int[3];
+		public int 		   region0_count = 0;
+		public int 		   region1_count = 0;
+		public int 	  	   preflag = 0;
+		public int 		   scalefac_scale = 0;
+		public int 		   count1table_select = 0;
 	}
 
 	private static class temporaire
@@ -1775,9 +1701,6 @@ final class LayerIIIDecoder implements FrameDecoder
 		public int[]			scfsi;
 		public gr_info_s[] 		gr;
 
-		/**
-		 * Dummy Constructor
-		 */
 		public temporaire()
 		{
 			scfsi = new int[4];
@@ -1791,9 +1714,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	{
 		public int 				main_data_begin = 0;
 		public temporaire[]		ch;
-		/**
-		 * Dummy Constructor
-		 */
+
 		public III_side_info_t()
 		{
 			ch = new temporaire[2];
@@ -1802,15 +1723,12 @@ final class LayerIIIDecoder implements FrameDecoder
 		}
 	}
 
-	private static class temporaire2
+	private static class Temporaire2
 	{
 		public int[]		 l;         /* [cb] */
 		public int[][]		 s;         /* [window][cb] */
 
-		/**
-		 * Dummy Constructor
-		 */
-		public temporaire2()
+		public Temporaire2()
 		{
 			l = new int[23];
 			s = new int[3][13];
@@ -1847,8 +1765,7 @@ final class LayerIIIDecoder implements FrameDecoder
 		9.3132257462E-10f, 6.5854450798E-10f, 4.6566128731E-10f, 3.2927225399E-10f
 		};
 
-
-	private static final float t_43[] = create_t_43();
+	private static final float T_43[] = create_t_43();
 
 	static private float[] create_t_43()
 	{
@@ -2227,48 +2144,48 @@ final class LayerIIIDecoder implements FrameDecoder
 	/***************************************************************/
 	/*                             INV_MDCT                        */
 	/***************************************************************/
-	private static final float win[][] =
-		{
-		{ -1.6141214951E-02f, -5.3603178919E-02f, -1.0070713296E-01f, -1.6280817573E-01f,
-			-4.9999999679E-01f, -3.8388735032E-01f, -6.2061144372E-01f, -1.1659756083E+00f,
-			-3.8720752656E+00f, -4.2256286556E+00f, -1.5195289984E+00f, -9.7416483388E-01f,
-			-7.3744074053E-01f, -1.2071067773E+00f, -5.1636156596E-01f, -4.5426052317E-01f,
-			-4.0715656898E-01f, -3.6969460527E-01f, -3.3876269197E-01f, -3.1242222492E-01f,
-			-2.8939587111E-01f, -2.6880081906E-01f, -5.0000000266E-01f, -2.3251417468E-01f,
-			-2.1596714708E-01f, -2.0004979098E-01f, -1.8449493497E-01f, -1.6905846094E-01f,
-			-1.5350360518E-01f, -1.3758624925E-01f, -1.2103922149E-01f, -2.0710679058E-01f,
-			-8.4752577594E-02f, -6.4157525656E-02f, -4.1131172614E-02f, -1.4790705759E-02f },
+    private static final float WIN[][] =  {
+            { -1.6141214951E-02f, -5.3603178919E-02f, -1.0070713296E-01f, -1.6280817573E-01f,
+                    -4.9999999679E-01f, -3.8388735032E-01f, -6.2061144372E-01f, -1.1659756083E+00f,
+                    -3.8720752656E+00f, -4.2256286556E+00f, -1.5195289984E+00f, -9.7416483388E-01f,
+                    -7.3744074053E-01f, -1.2071067773E+00f, -5.1636156596E-01f, -4.5426052317E-01f,
+                    -4.0715656898E-01f, -3.6969460527E-01f, -3.3876269197E-01f, -3.1242222492E-01f,
+                    -2.8939587111E-01f, -2.6880081906E-01f, -5.0000000266E-01f, -2.3251417468E-01f,
+                    -2.1596714708E-01f, -2.0004979098E-01f, -1.8449493497E-01f, -1.6905846094E-01f,
+                    -1.5350360518E-01f, -1.3758624925E-01f, -1.2103922149E-01f, -2.0710679058E-01f,
+                    -8.4752577594E-02f, -6.4157525656E-02f, -4.1131172614E-02f, -1.4790705759E-02f },
 
-			{ -1.6141214951E-02f, -5.3603178919E-02f, -1.0070713296E-01f, -1.6280817573E-01f,
-				-4.9999999679E-01f, -3.8388735032E-01f, -6.2061144372E-01f, -1.1659756083E+00f,
-				-3.8720752656E+00f, -4.2256286556E+00f, -1.5195289984E+00f, -9.7416483388E-01f,
-				-7.3744074053E-01f, -1.2071067773E+00f, -5.1636156596E-01f, -4.5426052317E-01f,
-				-4.0715656898E-01f, -3.6969460527E-01f, -3.3908542600E-01f, -3.1511810350E-01f,
-				-2.9642226150E-01f, -2.8184548650E-01f, -5.4119610000E-01f, -2.6213228100E-01f,
-				-2.5387916537E-01f, -2.3296291359E-01f, -1.9852728987E-01f, -1.5233534808E-01f,
-				-9.6496400054E-02f, -3.3423828516E-02f, 0.0000000000E+00f, 0.0000000000E+00f,
-				0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f },
+            { -1.6141214951E-02f, -5.3603178919E-02f, -1.0070713296E-01f, -1.6280817573E-01f,
+                    -4.9999999679E-01f, -3.8388735032E-01f, -6.2061144372E-01f, -1.1659756083E+00f,
+                    -3.8720752656E+00f, -4.2256286556E+00f, -1.5195289984E+00f, -9.7416483388E-01f,
+                    -7.3744074053E-01f, -1.2071067773E+00f, -5.1636156596E-01f, -4.5426052317E-01f,
+                    -4.0715656898E-01f, -3.6969460527E-01f, -3.3908542600E-01f, -3.1511810350E-01f,
+                    -2.9642226150E-01f, -2.8184548650E-01f, -5.4119610000E-01f, -2.6213228100E-01f,
+                    -2.5387916537E-01f, -2.3296291359E-01f, -1.9852728987E-01f, -1.5233534808E-01f,
+                    -9.6496400054E-02f, -3.3423828516E-02f, 0.0000000000E+00f, 0.0000000000E+00f,
+                    0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f },
 
-				{ -4.8300800645E-02f, -1.5715656932E-01f, -2.8325045177E-01f, -4.2953747763E-01f,
-					-1.2071067795E+00f, -8.2426483178E-01f, -1.1451749106E+00f, -1.7695290101E+00f,
-					-4.5470225061E+00f, -3.4890531002E+00f, -7.3296292804E-01f, -1.5076514758E-01f,
-					0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
-					0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
-					0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
-					0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
-					0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
-					0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f },
+            { -4.8300800645E-02f, -1.5715656932E-01f, -2.8325045177E-01f, -4.2953747763E-01f,
+                    -1.2071067795E+00f, -8.2426483178E-01f, -1.1451749106E+00f, -1.7695290101E+00f,
+                    -4.5470225061E+00f, -3.4890531002E+00f, -7.3296292804E-01f, -1.5076514758E-01f,
+                    0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
+                    0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
+                    0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
+                    0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
+                    0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
+                    0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f },
 
-					{ 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
-						0.0000000000E+00f, 0.0000000000E+00f, -1.5076513660E-01f, -7.3296291107E-01f,
-						-3.4890530566E+00f, -4.5470224727E+00f, -1.7695290031E+00f, -1.1451749092E+00f,
-						-8.3137738100E-01f, -1.3065629650E+00f, -5.4142014250E-01f, -4.6528974900E-01f,
-						-4.1066990750E-01f, -3.7004680800E-01f, -3.3876269197E-01f, -3.1242222492E-01f,
-						-2.8939587111E-01f, -2.6880081906E-01f, -5.0000000266E-01f, -2.3251417468E-01f,
-						-2.1596714708E-01f, -2.0004979098E-01f, -1.8449493497E-01f, -1.6905846094E-01f,
-						-1.5350360518E-01f, -1.3758624925E-01f, -1.2103922149E-01f, -2.0710679058E-01f,
-						-8.4752577594E-02f, -6.4157525656E-02f, -4.1131172614E-02f, -1.4790705759E-02f }
-		};
+            { 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f, 0.0000000000E+00f,
+                    0.0000000000E+00f, 0.0000000000E+00f, -1.5076513660E-01f, -7.3296291107E-01f,
+                    -3.4890530566E+00f, -4.5470224727E+00f, -1.7695290031E+00f, -1.1451749092E+00f,
+                    -8.3137738100E-01f, -1.3065629650E+00f, -5.4142014250E-01f, -4.6528974900E-01f,
+                    -4.1066990750E-01f, -3.7004680800E-01f, -3.3876269197E-01f, -3.1242222492E-01f,
+                    -2.8939587111E-01f, -2.6880081906E-01f, -5.0000000266E-01f, -2.3251417468E-01f,
+                    -2.1596714708E-01f, -2.0004979098E-01f, -1.8449493497E-01f, -1.6905846094E-01f,
+                    -1.5350360518E-01f, -1.3758624925E-01f, -1.2103922149E-01f, -2.0710679058E-01f,
+                    -8.4752577594E-02f, -6.4157525656E-02f, -4.1131172614E-02f, -1.4790705759E-02f }
+    };
+
 	/***************************************************************/
 	/*                         END OF INV_MDCT                     */
 	/***************************************************************/
