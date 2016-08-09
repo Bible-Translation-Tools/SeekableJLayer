@@ -1,9 +1,0 @@
-<?xml version="1.0" ?>
-<!-- Configuration of the Ant build system to generate a Jar file -->
-<project name="JavaZoom" default="CreateJar">
-	<target name="CreateJar" description="Create Jar file">
-		<jar jarfile="../libs/javazoom.jar" basedir="." includes="**/**.class">
-			<fileset dir="." includes = "**/**.ser" />
-		</jar>
-	</target>
-</project>
