@@ -39,11 +39,11 @@ package javazoom.jl.decoder;
  */
 public interface Obuffer
 {
-	public static final int	OBUFFERSIZE = 2 * 1152;	// max. 2 * 1152 samples per frame
-	public static final int MAXCHANNELS = 2;        // max. number of channels
+	int	OBUFFERSIZE = 2 * 1152;	// max. 2 * 1152 samples per frame
+	int MAXCHANNELS = 2;        // max. number of channels
 
 	/**
 	 * Accepts 32 PCM samples. 
 	 */
-	public void appendSamples(int channel, float[] f);
+    void appendSamples(int channel, float[] f);
 }
