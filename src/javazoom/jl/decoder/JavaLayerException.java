@@ -59,12 +59,8 @@ public class JavaLayerException extends Exception
 	public void printStackTrace(PrintStream ps)
 	{
 		if (this.exception==null)
-		{
-			super.printStackTrace(ps);	
-		}
+            super.printStackTrace(ps);
 		else
-		{
-			exception.printStackTrace();
-		}
+            exception.printStackTrace();
 	}
 }
