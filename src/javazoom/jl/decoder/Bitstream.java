@@ -352,7 +352,7 @@ public final class Bitstream extends Header
 	/**
 	 * Parses the data previously read with read_frame_data().
 	 */
-	void parse_frame() throws JavaLayerException
+	void parse_frame()
 	{
 		// Convert Bytes read to int
 		int	b=0;
@@ -380,7 +380,7 @@ public final class Bitstream extends Header
 	 * (1 <= number_of_bits <= 16)
 	 * @throws JavaLayerException
 	 */
-	int get_bits(int number_of_bits) throws JavaLayerException
+	int get_bits(int number_of_bits)
 	{
 		int	returnvalue;
 		int sum = bitindex + number_of_bits;

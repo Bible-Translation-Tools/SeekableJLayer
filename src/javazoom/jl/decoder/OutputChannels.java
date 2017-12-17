@@ -33,20 +33,20 @@ public interface OutputChannels
 	/**
 	 * Flag to indicate output should include both channels. 
 	 */
-	static final int BOTH_CHANNELS = 0;
+	int BOTH_CHANNELS = 0;
 		
 	/**
 	 * Flag to indicate output should include the left channel only. 
 	 */
-	static final int LEFT_CHANNEL = 1;
+	int LEFT_CHANNEL = 1;
 
 	/**
 	 * Flag to indicate output should include the right channel only. 
 	 */
-	static final int RIGHT_CHANNEL = 2;
+	int RIGHT_CHANNEL = 2;
 		
 	/**
 	 * Flag to indicate output is mono. 
 	 */
-	static final int DOWNMIX_CHANNELS = 3;
+	int DOWNMIX_CHANNELS = 3;
 }

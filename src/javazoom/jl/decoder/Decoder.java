@@ -38,19 +38,9 @@ public class Decoder
 	 */
 	private Obuffer			        output;
 
-	/**
-	 * Synthesis filter for the left channel.
-	 */
-	private SynthesisFilter			filter1;
+	private SynthesisFilter leftFilter;
+	private SynthesisFilter rightFilter;
 
-	/**
-	 * Sythesis filter for the right channel.
-	 */
-	private SynthesisFilter			filter2;	
-
-	/**
-	 * The decoder used to decode layer III frames.
-	 */
 	private LayerIIIDecoder			l3decoder;
 	private LayerIIDecoder			l2decoder;
 	private LayerIDecoder			l1decoder;
@@ -62,10 +52,6 @@ public class Decoder
 	final private int channelChoice;
     final private boolean spectralContent;
 
-	/**
-	 * Creates a new <code>Decoder</code> instance with default 
-	 * parameters.
-	 */
 	public Decoder(int channelChoice, boolean spectralContent)
 	{
 		this.channelChoice=channelChoice;
@@ -78,16 +64,7 @@ public class Decoder
 	 */
 	public void decodeFrame(Bitstream stream) throws JavaLayerException
 	{
-		//>
-		// WVB - It is pointless to check the initialisation with each frame we decode.
-		// Better make sure it is initialized by calling initialize(stream) in advance.
-		// Grunt... the initialisation can only take place when the frame is actually read.
-		// That means that we might need to restart the stream after having read the first frame.
-		// Seemns like a fair deal I guess.
-		if (!initialized)
-			throw new JavaLayerException("Decoder not initialized",null);
-		//<
-
+		assert initialized;
 		int layer = stream.layer();
 		// WVB - still bummed about having the retrieve the decoder at each new run
 		// this is utterly stupid what happens here.
@@ -156,20 +133,20 @@ public class Decoder
 		{
 		case 3:
 			if (l3decoder==null)
-				l3decoder = new LayerIIIDecoder(stream, filter1, filter2, output, channelChoice);
+				l3decoder = new LayerIIIDecoder(stream, leftFilter, rightFilter, output, channelChoice);
 			return l3decoder;
 		case 2:
 			if (l2decoder==null)
 			{
 				l2decoder = new LayerIIDecoder();
-				l2decoder.create(stream, filter1, filter2, output, channelChoice);				
+				l2decoder.create(stream, leftFilter, rightFilter, output, channelChoice);
 			}
 			return l2decoder;
 		case 1:
 			if (l1decoder==null)
 			{
 				l1decoder = new LayerIDecoder();
-				l1decoder.create(stream, filter1, filter2, output, channelChoice);				
+				l1decoder.create(stream, leftFilter, rightFilter, output, channelChoice);
 			}
 			return l1decoder;
 		}
@@ -178,23 +155,13 @@ public class Decoder
 
 	private void initialize(Header header)
 	{
-		// REVIEW: allow customizable scale factor
 		int mode = header.mode();
 		int channels = mode==Header.SINGLE_CHANNEL ? 1 : 2;
-
-		// set up output buffer if not set up by client.
-		if (output == null)
-			output = new SampleBuffer(channels);
-
-		filter1 = new SynthesisFilter(0,spectralContent);
-
-		// REVIEW: allow mono output for stereo
-		if (channels==2) 
-			filter2 = new SynthesisFilter(1,spectralContent);
-
+		leftFilter = new SynthesisFilter(0,spectralContent);
+		if (channels==2)
+			rightFilter = new SynthesisFilter(1,spectralContent);
 		outputChannels = channels;
 		outputFrequency = header.frequency();
-
 		initialized = true;
 	}
 

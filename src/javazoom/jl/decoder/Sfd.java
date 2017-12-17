@@ -1,5 +1,5 @@
-/**
- * @author Werner Van Belle
+/*
+  @author Werner Van Belle
  */
 package javazoom.jl.decoder;
 

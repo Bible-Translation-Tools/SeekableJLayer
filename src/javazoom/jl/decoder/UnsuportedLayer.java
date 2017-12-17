@@ -1,6 +1,5 @@
 package javazoom.jl.decoder;
 
-public class UnsuportedLayer extends JavaLayerException 
+class UnsuportedLayer extends JavaLayerException
 {
-
 }

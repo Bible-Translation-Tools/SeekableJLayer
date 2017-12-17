@@ -74,7 +74,6 @@ class Header
 	private boolean			h_vbr;
 	private int				h_vbr_frames;
 	private int				h_vbr_bytes;
-	private byte[]			h_vbr_toc;
 
 	private byte			syncmode = Bitstream.INITIAL_SYNC;
 	private Crc16			crc;
@@ -86,10 +85,11 @@ class Header
 	Header()
 	{
 	}
-	
+
+	//>
 	public String toString()
 	{
-		StringBuffer buffer = new StringBuffer(200);
+		StringBuilder buffer = new StringBuilder(200);
 		buffer.append("Layer ");
 		buffer.append(layer_string());
 		buffer.append(" frame ");
@@ -107,6 +107,7 @@ class Header
 
 		return buffer.toString();
 	}
+	//<
 
 	/**
 	 * Read a 32-bit header from the bitstream, including the framedata itself.
@@ -204,28 +205,6 @@ class Header
 		}
 		else
 			crcp[0] = null;
-		if (h_sample_frequency == FOURTYFOUR_POINT_ONE)
-		{
-			/*
-				if (offset == null)
-			  {
-				  int max = max_number_of_frames(stream);
-				  offset = new int[max];
-			     for(int i=0; i<max; i++) offset[i] = 0;
-			  }
-			  // E.B : Investigate more
-			  int cf = stream.current_frame();
-			  int lf = stream.last_frame();
-			  if ((cf > 0) && (cf == lf))
-			  {
-				   offset[cf] = offset[cf-1] + h_padding_bit;
-			  }
-			  else
-			  {
-				       offset[0] = h_padding_bit;
-			  }
-			 */
-		}
 	}
 
 	/**
@@ -237,7 +216,7 @@ class Header
 		// Trying Xing header.
 		String xing = "Xing";
 		byte tmp[] = new byte[4];
-		int offset = 0;
+		int offset;
 		// Compute "Xing" offset depending on MPEG version and channels.
 		if (h_version == MPEG1) 
 		{
@@ -249,6 +228,7 @@ class Header
 			if (h_mode == SINGLE_CHANNEL) offset=13-4;
 			else offset = 21-4;		  
 		}
+		byte[] h_vbr_toc;
 		try
 		{
 			System.arraycopy(firstframe, offset, tmp, 0, 4);
@@ -268,7 +248,7 @@ class Header
 				System.arraycopy(firstframe, offset + length, flags, 0, flags.length);
 				length += flags.length;
 				// Read number of frames (if available).
-				if ((flags[3] & (byte) (1 << 0)) != 0)
+				if ((flags[3] & (byte) (1)) != 0)
 				{
 					System.arraycopy(firstframe, offset + length, tmp, 0, tmp.length);
 					h_vbr_frames = (tmp[0] << 24)&0xFF000000 | (tmp[1] << 16)&0x00FF0000 | (tmp[2] << 8)&0x0000FF00 | tmp[3]&0x000000FF;
@@ -292,8 +272,7 @@ class Header
 				{
 					System.arraycopy(firstframe, offset + length, tmp, 0, tmp.length);
 //					h_vbr_scale = (tmp[0] << 24)&0xFF000000 | (tmp[1] << 16)&0x00FF0000 | (tmp[2] << 8)&0x0000FF00 | tmp[3]&0x000000FF;
-					length += 4;	
-				}		
+				}
 			}				
 		}
 		catch (ArrayIndexOutOfBoundsException e)
@@ -324,8 +303,7 @@ class Header
 				// Frames.	
 				System.arraycopy(firstframe, offset + length, tmp, 0, tmp.length);
 				h_vbr_frames = (tmp[0] << 24)&0xFF000000 | (tmp[1] << 16)&0x00FF0000 | (tmp[2] << 8)&0x0000FF00 | tmp[3]&0x000000FF;
-				length += 4;	
-				// TOC	
+				// TOC
 			}
 		}
 		catch (ArrayIndexOutOfBoundsException e)
@@ -347,8 +325,7 @@ class Header
 	 */
 	private boolean checksums()
 	{
-		if (h_protection_bit == 0) return true;
-		else return false;
+		return h_protection_bit == 0;
 	}
 
 	/**
@@ -375,12 +352,11 @@ class Header
 		 {0 /*free format*/, 8000, 16000, 24000, 32000, 40000, 48000, 56000, 64000, 80000, 96000, 112000, 128000, 144000, 160000, 0}},
 	};
 
-	// E.B -> private to public
 	/**
 	 * Calculate Frame size.
 	 * Calculates framesize in bytes excluding header size.
 	 */
-	private int calculate_framesize()
+	private void calculate_framesize()
 	{
 
 		if (h_layer == 1)
@@ -419,7 +395,6 @@ class Header
 			}
 		}
 		framesize -= 4;             // subtract header size
-		return framesize;
 	}
 
 	/**
@@ -560,26 +535,35 @@ class Header
 		switch (h_sample_frequency)
 		{
 		case THIRTYTWO:
-			if (h_version == MPEG1)
-				return "32 kHz";
-			else if (h_version == MPEG2_LSF)
-				return "16 kHz";
-			else	// SZD
-				return "8 kHz";
+			switch (h_version)
+			{
+				case MPEG1:
+					return "32 kHz";
+				case MPEG2_LSF:
+					return "16 kHz";
+				default:
+					return "8 kHz";
+			}
 		case FOURTYFOUR_POINT_ONE:
-			if (h_version == MPEG1)
-				return "44.1 kHz";
-			else if (h_version == MPEG2_LSF)
-				return "22.05 kHz";
-			else	// SZD
-				return "11.025 kHz";
+			switch (h_version)
+			{
+				case MPEG1:
+					return "44.1 kHz";
+				case MPEG2_LSF:
+					return "22.05 kHz";
+				default:
+					return "11.025 kHz";
+			}
 		case FOURTYEIGHT:
-			if (h_version == MPEG1)
-				return "48 kHz";
-			else if (h_version == MPEG2_LSF)
-				return "24 kHz";
-			else	// SZD
-				return "12 kHz";
+			switch (h_version)
+			{
+				case MPEG1:
+					return "48 kHz";
+				case MPEG2_LSF:
+					return "24 kHz";
+				default:
+					return "12 kHz";
+			}
 		}
 		return(null);
 	}

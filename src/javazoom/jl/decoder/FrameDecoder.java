@@ -24,20 +24,16 @@ package javazoom.jl.decoder;
 /**
  * Implementations of FrameDecoder are responsible for decoding an MPEG audio frame. 
  */
-// REVIEW: the interface currently is too thin. There should be
-// methods to specify the output buffer, the synthesis filters and
-// possibly other objects used by the decoder. 
 interface FrameDecoder
 {
 	/**
 	 * Decodes one frame of MPEG audio. 
-	 * @throws javazoom.jl.decoder.JavaLayerException
 	 */
-	public void decodeFrame() throws JavaLayerException;
+	void decodeFrame() throws JavaLayerException;
 	/**
 	 * WVB - Notifies the decoder that the inputstream has been seeked. 
-	 * For Layer 3, the bitreservoir must be cleared then.
+	 * For Layer 3, the bitreservoir must be cleared.
 	 * Layer1 and Layer 2 don't require much attention.
 	 */
-	public void seek_notify();
+	void seek_notify();
 }

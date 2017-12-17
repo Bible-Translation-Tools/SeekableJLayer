@@ -34,12 +34,8 @@
  */
 package javazoom.jl.decoder;
 
-/**
- * Base Class for audio output.
- */
 public interface Obuffer
 {
-	int	OBUFFERSIZE = 2 * 1152;	// max. 2 * 1152 samples per frame
 	int MAXCHANNELS = 2;        // max. number of channels
 
 	/**

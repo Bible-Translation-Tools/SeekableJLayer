@@ -1,6 +1,6 @@
 package javazoom.jl.decoder;
 
-public class BitStreamHeaderError extends JavaLayerException
+class BitStreamHeaderError extends JavaLayerException
 {
 	BitStreamHeaderError(String s, Throwable e)
 	{

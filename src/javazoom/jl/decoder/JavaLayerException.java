@@ -33,7 +33,7 @@ import java.io.PrintStream;
 @SuppressWarnings("serial") 
 public class JavaLayerException extends Exception
 {
-	public final Throwable	exception;
+	private final Throwable	exception;
 	
 	public JavaLayerException()
 	{

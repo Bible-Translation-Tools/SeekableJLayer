@@ -41,20 +41,22 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	protected void createSubbands()
 	{		
 		int i;
-		if (mode == Header.SINGLE_CHANNEL)
-			for (i = 0; i < num_subbands; ++i)
-				subbands[i] = new SubbandLayer2(i);
-		else if (mode == Header.JOINT_STEREO)
+		switch (mode)
 		{
-			for (i = 0; i < stream.intensity_stereo_bound(); ++i)
-				subbands[i] = new SubbandLayer2Stereo(i);
-			for (; i < num_subbands; ++i)
-				subbands[i] = new SubbandLayer2IntensityStereo(i);
-		}
-		else
-		{
-			for (i = 0; i < num_subbands; ++i)
-				subbands[i] = new SubbandLayer2Stereo(i);
+			case Header.SINGLE_CHANNEL:
+				for (i = 0; i < num_subbands; ++i)
+					subbands[i] = new SubbandLayer2(i);
+				break;
+			case Header.JOINT_STEREO:
+				for (i = 0; i < stream.intensity_stereo_bound(); ++i)
+					subbands[i] = new SubbandLayer2Stereo(i);
+				for (; i < num_subbands; ++i)
+					subbands[i] = new SubbandLayer2IntensityStereo(i);
+				break;
+			default:
+				for (i = 0; i < num_subbands; ++i)
+					subbands[i] = new SubbandLayer2Stereo(i);
+				break;
 		}
 
 	}
@@ -474,21 +476,21 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			0.00195312500f, 0.00097656250f, 0.00048828125f, 0.00024414063f, 0.00012207031f,
 			0.00006103516f };
 
-		protected int 		subbandnumber; // NO_UCD (use final)
-		protected int		allocation;
-		protected int		scfsi;
-		protected float		scalefactor1; // NO_UCD (use private)
+		final int 		subbandnumber; // NO_UCD (use final)
+		int		allocation;
+		int		scfsi;
+		float		scalefactor1; // NO_UCD (use private)
 
-		protected float scalefactor2;
-		protected float scalefactor3;
+		float scalefactor2;
+		float scalefactor3;
 		private final int[] 	codelength = {0}; 
-		protected float 	groupingtable[][] = new float[2][];  // NO_UCD (use final)
-		protected float[]	factor = {0.0f}; // NO_UCD (use final)
-		protected int		groupnumber; // NO_UCD (use private)
-		protected int 		samplenumber; // NO_UCD (use private)
-		protected final float[]	samples = new float[3];
-		protected final float[]	c = {0};
-		protected final float[]	d = {0};
+		final float[][] 	groupingtable = new float[2][];  // NO_UCD (use final)
+		final float[]	factor = {0.0f}; // NO_UCD (use final)
+		int		groupnumber; // NO_UCD (use private)
+		int 		samplenumber; // NO_UCD (use private)
+		final float[]	samples = new float[3];
+		final float[]	c = {0};
+		final float[]	d = {0};
 
 		private SubbandLayer2(int subbandnumber)
 		{	
@@ -496,7 +498,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			groupnumber = samplenumber = 0;  
 		}
 
-		protected final int get_allocationlength (Header header)
+		final int get_allocationlength(Header header)
 		{
 			if (header.version() == Header.MPEG1)
 			{
@@ -537,10 +539,10 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			}
 		}
 
-		protected void prepare_sample_reading(Header header, int allocation,
-				int channel,
-				float[] factor, int[] codelength,
-				float[] c, float[] d)
+		void prepare_sample_reading(Header header, int allocation,
+									int channel,
+									float[] factor, int[] codelength,
+									float[] c, float[] d)
 		{
 			int channel_bitrate = header.bitrate_index();
 			// calculate bitrate per channel:
@@ -603,7 +605,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws JavaLayerException
 		 *
 		 */
-		public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
+		public void read_allocation(Bitstream stream, Crc16 crc)
 		{
 			int length = get_allocationlength(stream);
 			allocation = stream.get_bits(length);
@@ -615,7 +617,7 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		 * @throws JavaLayerException
 		 *
 		 */
-		public void read_scalefactor_selection (Bitstream stream, Crc16 crc) throws JavaLayerException
+		void read_scalefactor_selection(Bitstream stream, Crc16 crc)
 		{
 			if (allocation != 0)
 			{
@@ -729,21 +731,18 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	 */
 	private static class SubbandLayer2IntensityStereo extends SubbandLayer2
 	{
-		protected int		 channel2_scfsi;
-		protected float 	 channel2_scalefactor1, channel2_scalefactor2, channel2_scalefactor3;
+		int		 channel2_scfsi;
+		float 	 channel2_scalefactor1;
+		float channel2_scalefactor2;
+		float channel2_scalefactor3;
 
 
-		public SubbandLayer2IntensityStereo (int subbandnumber)
+		SubbandLayer2IntensityStereo(int subbandnumber)
 		{
 			super(subbandnumber);
 		}
 
-		public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
-		{
-			super.read_allocation (stream, crc);
-		}
-
-		public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws JavaLayerException
+		public void read_scalefactor_selection(Bitstream stream, Crc16 crc)
 		{
 			if (allocation != 0)
 			{
@@ -789,11 +788,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 
 		}
 
-		public boolean read_sampledata(Bitstream stream) throws JavaLayerException
-		{
-			return super.read_sampledata (stream);
-		}
-
 		public boolean put_next_sample(int channels, SynthesisFilter filter1, SynthesisFilter filter2)
 		{
 			if (allocation != 0)
@@ -802,53 +796,48 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 
 				if (groupingtable[0] == null)
 					sample = (sample + d[0]) * c[0];
-				if (channels == OutputChannels.BOTH_CHANNELS)
+				switch (channels)
 				{
-					float sample2 = sample;
-					if (groupnumber <= 4)
-					{
-						sample *= scalefactor1;
-						sample2 *= channel2_scalefactor1;
-					}
-					else if (groupnumber <= 8)
-					{
-						sample *= scalefactor2;
-						sample2 *= channel2_scalefactor2;
-					}
-					else
-					{
-						sample *= scalefactor3;
-						sample2 *= channel2_scalefactor3;
-					}
-					filter1.input_sample(sample, subbandnumber);
-					filter2.input_sample(sample2, subbandnumber);
-				}
-				else if (channels == OutputChannels.LEFT_CHANNEL)
-				{
-					if (groupnumber <= 4)
-						sample *= scalefactor1;
-					else if (groupnumber <= 8)
-						sample *= scalefactor2;
-					else
-						sample *= scalefactor3;
-					filter1.input_sample(sample, subbandnumber);
-				}
-				else
-				{
-					if (groupnumber <= 4)
-						sample *= channel2_scalefactor1;
-					else if (groupnumber <= 8)
-						sample *= channel2_scalefactor2;
-					else
-						sample *= channel2_scalefactor3;
-					filter1.input_sample(sample, subbandnumber);
+					case OutputChannels.BOTH_CHANNELS:
+						float sample2 = sample;
+						if (groupnumber <= 4)
+						{
+							sample *= scalefactor1;
+							sample2 *= channel2_scalefactor1;
+						} else if (groupnumber <= 8)
+						{
+							sample *= scalefactor2;
+							sample2 *= channel2_scalefactor2;
+						} else
+						{
+							sample *= scalefactor3;
+							sample2 *= channel2_scalefactor3;
+						}
+						filter1.input_sample(sample, subbandnumber);
+						filter2.input_sample(sample2, subbandnumber);
+						break;
+					case OutputChannels.LEFT_CHANNEL:
+						if (groupnumber <= 4)
+							sample *= scalefactor1;
+						else if (groupnumber <= 8)
+							sample *= scalefactor2;
+						else
+							sample *= scalefactor3;
+						filter1.input_sample(sample, subbandnumber);
+						break;
+					default:
+						if (groupnumber <= 4)
+							sample *= channel2_scalefactor1;
+						else if (groupnumber <= 8)
+							sample *= channel2_scalefactor2;
+						else
+							sample *= channel2_scalefactor3;
+						filter1.input_sample(sample, subbandnumber);
+						break;
 				}
 			}
 
-			if (++samplenumber == 3)
-				return true;
-			else
-				return false;
+			return ++samplenumber == 3;
 		}
 	}
 
@@ -857,36 +846,26 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 	 */
 	private static class SubbandLayer2Stereo extends SubbandLayer2
 	{
-		protected int			channel2_allocation;
-		protected int 		channel2_scfsi;
-		protected float	 	channel2_scalefactor1, channel2_scalefactor2, channel2_scalefactor3;
+		int			channel2_allocation;
+		int 		channel2_scfsi;
+		float	 	channel2_scalefactor1;
+		float channel2_scalefactor2;
+		float channel2_scalefactor3;
 		//protected boolean	 	channel2_grouping;  ???? Never used!
-		protected int[] 		channel2_codelength = {0};
+		final int[] 		channel2_codelength = {0};
 		//protected float[][] 	channel2_groupingtable = {{0},{0}};
-		protected float[]	 	channel2_factor = {0};
-		protected float[] 	channel2_samples;
-		protected float[]	 	channel2_c = {0};
-		protected float[]		channel2_d = {0};
+		final float[]	 	channel2_factor = {0};
+		final float[] 	channel2_samples;
+		final float[]	 	channel2_c = {0};
+		final float[]		channel2_d = {0};
 
-		public SubbandLayer2Stereo(int subbandnumber)
+		SubbandLayer2Stereo(int subbandnumber)
 		{
 			super(subbandnumber);
 			channel2_samples = new float[3];
 		}
 
-		public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws JavaLayerException
-		{
-			int length = get_allocationlength(header);
-			allocation = stream.get_bits(length);
-			channel2_allocation = stream.get_bits(length);
-			if (crc != null)
-			{
-				crc.add_bits(allocation, length);
-				crc.add_bits(channel2_allocation, length);
-			}
-		}
-
-		public void read_scalefactor_selection(Bitstream stream, Crc16 crc) throws JavaLayerException
+		public void read_scalefactor_selection(Bitstream stream, Crc16 crc)
 		{
 			if (allocation != 0)
 			{

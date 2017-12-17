@@ -1,5 +1,5 @@
-/**
- * @author Werner Van Belle
+/*
+  @author Werner Van Belle
  */
 package javazoom.jl.decoder;
 
@@ -93,7 +93,7 @@ public final class SeekableFile extends SeekableInput
 	}
 
 	@Override
-	public long skip(long byteCount) throws IOException 
+	public long skip(long byteCount)
 	{
 		int oldRetrievalPos = retrievalPosition;
 		retrievalPosition += byteCount;
@@ -109,7 +109,7 @@ public final class SeekableFile extends SeekableInput
 	}
 
 	@Override
-	public int available() throws IOException 
+	public int available()
 	{
 		return fileSize - retrievalPosition;
 	}
@@ -127,7 +127,7 @@ public final class SeekableFile extends SeekableInput
 	}
 
 	@Override
-	public synchronized void reset() throws IOException 
+	public synchronized void reset()
 	{
 		retrievalPosition = markedPosition;
 	}

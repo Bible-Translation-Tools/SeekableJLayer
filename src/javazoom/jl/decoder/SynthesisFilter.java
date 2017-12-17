@@ -37,7 +37,7 @@
  */
 package javazoom.jl.decoder;
 
-/**
+/*
  * WVB - TODO - we have two of these instances floating around; which is fine. Each instance will try to tell an OBuffer 
  * that it has data. This is silly because I believe we can do that at a synchronous position ourselves. That would mean
  * that we would pass two arrays to the OBuffer, and that the filter would not be responsible for knowing the OBuffer.
@@ -58,9 +58,9 @@ final class SynthesisFilter
 	private final int	  channel;
     private final boolean spectralContent;
 
-    public SynthesisFilter(int channelnumber, boolean spectralContent)
+    SynthesisFilter(int channelnumber, boolean spectralContent)
 	{  	 
-		d16 = splitArray(Sfd.SFD, 16);
+		d16 = splitArray();
 		v1 = new float[512];
 		v2 = new float[512];
 		channel = channelnumber;
@@ -1114,42 +1114,35 @@ final class SynthesisFilter
 	 * Converts a 1D array into a number of smaller arrays. This is used
 	 * to achieve offset + constant indexing into an array. Each sub-array
 	 * represents a block of values of the original array. 
-	 * @param array			The array to split up into blocks.
-	 * @param blockSize		The size of the blocks to split the array
-	 *						into. This must be an exact divisor of
-	 *						the length of the array, or some data
-	 *						will be lost from the main array.
-	 * 
 	 * @return	An array of arrays in which each element in the returned
 	 *			array will be of length <code>blockSize</code>.
 	 */
-	static private D16[] splitArray(final float[] array, final int blockSize)
+	static private D16[] splitArray()
 	{
-		int size = array.length / blockSize;
+		int size = Sfd.SFD.length / 16;
 		D16[] split = new D16[size];
 		for (int i=0; i<size; i++)
-			split[i] = subArray(array, i*blockSize, blockSize);
+			split[i] = subArray(i* 16, 16);
 		return split;
 	}
 
 	/**
 	 * Returns a subarray of an existing array.
 	 * 
-	 * @param array	The array to retrieve a subarra from.
-	 * @param offs	The offset in the array that corresponds to
+	 * @param offs    The offset in the array that corresponds to
 	 *				the first index of the subarray.
-	 * @param len	The number of indeces in the subarray.
+	 * @param len    The number of indeces in the subarray.
 	 * @return The subarray, which may be of length 0.
 	 */
-	static private D16 subArray(final float[] array, final int offs, int len)
+	static private D16 subArray(final int offs, int len)
 	{
-		if (offs+len > array.length)
-			len = array.length-offs;
-		if (len < 0) 
+		if (offs+len > Sfd.SFD.length)
+			len = Sfd.SFD.length-offs;
+		if (len < 0)
 			len = 0;
 
 		float[] subarray = new float[len];
-        System.arraycopy(array, offs, subarray, 0, len);
+        System.arraycopy(Sfd.SFD, offs, subarray, 0, len);
 		return new D16(subarray);
 	}
 }

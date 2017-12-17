@@ -31,15 +31,15 @@ package javazoom.jl.decoder;
  */
 class LayerIDecoder implements FrameDecoder
 {
-	protected Bitstream 			stream;
+	Bitstream 			stream;
     private SynthesisFilter 		filter1, filter2;
     private Obuffer 				buffer;
     private int 					which_channels;
-	protected int					mode;
+	int					mode;
 	
-	protected int					num_subbands;
-	protected Subband[]				subbands;
-	protected final Crc16			crc	= null;	// new Crc16() to enable CRC checking.
+	int					num_subbands;
+	Subband[]				subbands;
+	final Crc16			crc	= null;	// new Crc16() to enable CRC checking.
 	
 	public LayerIDecoder()
 	{
@@ -77,27 +77,29 @@ class LayerIDecoder implements FrameDecoder
 
 	}
 
-	protected void createSubbands()
+	void createSubbands()
 	{  		
 		int i;
-		if (mode == Header.SINGLE_CHANNEL)
-  		  for (i = 0; i < num_subbands; ++i)
-  		    subbands[i] = new SubbandLayer1(i);
-  		else if (mode == Header.JOINT_STEREO)
+		switch (mode)
 		{
-  		  for (i = 0; i < stream.intensity_stereo_bound(); ++i)
-  		    subbands[i] = new SubbandLayer1Stereo(i);
-  		  for (; i < num_subbands; ++i)
-  		    subbands[i] = new SubbandLayer1IntensityStereo(i);
-  		}
-		else
-		{
-  		  for (i = 0; i < num_subbands; ++i)
-  		    subbands[i] = new SubbandLayer1Stereo(i);
-  	    }		
+			case Header.SINGLE_CHANNEL:
+				for (i = 0; i < num_subbands; ++i)
+					subbands[i] = new SubbandLayer1(i);
+				break;
+			case Header.JOINT_STEREO:
+				for (i = 0; i < stream.intensity_stereo_bound(); ++i)
+					subbands[i] = new SubbandLayer1Stereo(i);
+				for (; i < num_subbands; ++i)
+					subbands[i] = new SubbandLayer1IntensityStereo(i);
+				break;
+			default:
+				for (i = 0; i < num_subbands; ++i)
+					subbands[i] = new SubbandLayer1Stereo(i);
+				break;
+		}
 	}
 	
-	private final void readAllocation() throws JavaLayerException
+	private void readAllocation() throws JavaLayerException
 	{
 		// start to read audio data:
   	    for (int i = 0; i < num_subbands; ++i)
@@ -105,18 +107,18 @@ class LayerIDecoder implements FrameDecoder
 		
 	}
 
-	protected void readScaleFactorSelection() throws JavaLayerException
+	void readScaleFactorSelection() throws JavaLayerException
 	{
 		// scale factor selection not present for layer I. 
 	}
 	
-	private final void readScaleFactors() throws JavaLayerException
+	private void readScaleFactors() throws JavaLayerException
 	{
 		for (int i = 0; i < num_subbands; ++i)
   		  subbands[i].read_scalefactor(stream);  		
 	}
 	
-	private final void readSampleData() throws JavaLayerException
+	private void readSampleData() throws JavaLayerException
 	{
 		boolean read_ready = false;
 		boolean write_ready = false;
@@ -185,7 +187,7 @@ class LayerIDecoder implements FrameDecoder
 	{
 
 	  // Factors and offsets for sample requantization
-	  public static final float table_factor[] = {
+	  static final float[] table_factor = {
 	   0.0f, (1.0f/2.0f) * (4.0f/3.0f), (1.0f/4.0f) * (8.0f/7.0f), (1.0f/8.0f) * (16.0f/15.0f),
 	  (1.0f/16.0f) * (32.0f/31.0f), (1.0f/32.0f) * (64.0f/63.0f), (1.0f/64.0f) * (128.0f/127.0f),
 	  (1.0f/128.0f) * (256.0f/255.0f), (1.0f/256.0f) * (512.0f/511.0f),
@@ -197,7 +199,7 @@ class LayerIDecoder implements FrameDecoder
 	  ,0.0f
 	  };
 
-	  public static final float table_offset[] = {
+	  static final float[] table_offset = {
 	   0.0f, ((1.0f/2.0f)-1.0f) * (4.0f/3.0f), ((1.0f/4.0f)-1.0f) * (8.0f/7.0f), ((1.0f/8.0f)-1.0f) * (16.0f/15.0f),
 	  ((1.0f/16.0f)-1.0f) * (32.0f/31.0f), ((1.0f/32.0f)-1.0f) * (64.0f/63.0f), ((1.0f/64.0f)-1.0f) * (128.0f/127.0f),
 	  ((1.0f/128.0f)-1.0f) * (256.0f/255.0f), ((1.0f/256.0f)-1.0f) * (512.0f/511.0f),
@@ -209,18 +211,19 @@ class LayerIDecoder implements FrameDecoder
 	  ,0.0f
 	  };
 
-	  protected int			 subbandnumber;
-	  protected int			 samplenumber;
-	  protected int			 allocation;
-	  protected float		 scalefactor;
-	  protected int 		 samplelength;
-	  protected float 		 sample;
-	  protected float 		 factor, offset;
+	  final int			 subbandnumber;
+	  int			 samplenumber;
+	  int			 allocation;
+	  float		 scalefactor;
+	  int 		 samplelength;
+	  float 		 sample;
+	  float 		 factor;
+		float offset;
 
 	  /**
 	   * Construtor.
 	   */
-	  public SubbandLayer1(int subbandnumber)
+	  SubbandLayer1(int subbandnumber)
 	  {
 	    this.subbandnumber = subbandnumber;
 	    samplenumber = 0;  
@@ -252,7 +255,7 @@ class LayerIDecoder implements FrameDecoder
 	 * @throws JavaLayerException
 	   *
 	   */
-	  public void read_scalefactor(Bitstream stream) throws JavaLayerException
+	  public void read_scalefactor(Bitstream stream)
 	  {
 	    if (allocation != 0) scalefactor = scalefactors[stream.get_bits(6)];
 	  }
@@ -297,50 +300,34 @@ class LayerIDecoder implements FrameDecoder
 		super(subbandnumber);  
 	  }
 
-	  public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
-	  {
-	    super.read_allocation (stream, crc);
-	  }
-
-	  public void read_scalefactor (Bitstream stream, Header header) throws JavaLayerException
-	  {
-	    if (allocation != 0)
-	    {
-		  scalefactor = scalefactors[stream.get_bits(6)];
-		  channel2_scalefactor = scalefactors[stream.get_bits(6)];
-	    }
-	  }
-
-	  public boolean read_sampledata(Bitstream stream) throws JavaLayerException
-	  {
-	  	 return super.read_sampledata (stream);
-	  }
-	  
-	  /**
-	   *
-	   */
 	  public boolean put_next_sample (int channels, SynthesisFilter filter1, SynthesisFilter filter2)
 	  {
 	    if (allocation !=0 )
 	    {
 	      sample = sample * factor + offset;		// requantization
-		  if (channels == OutputChannels.BOTH_CHANNELS)
-	      {
-			float sample1 = sample * scalefactor,
-			sample2 = sample * channel2_scalefactor;
-			filter1.input_sample(sample1, subbandnumber);
-			filter2.input_sample(sample2, subbandnumber);
-		  }
-		  else if (channels == OutputChannels.LEFT_CHANNEL)
-		  {
-			float sample1 = sample * scalefactor;
-			filter1.input_sample(sample1, subbandnumber);
-		  }
-		  else
-		  {
-			float sample2 = sample * channel2_scalefactor;
-			filter1.input_sample(sample2, subbandnumber);
-		  }
+			switch (channels)
+			{
+				case OutputChannels.BOTH_CHANNELS:
+				{
+					float sample1 = sample * scalefactor,
+							sample2 = sample * channel2_scalefactor;
+					filter1.input_sample(sample1, subbandnumber);
+					filter2.input_sample(sample2, subbandnumber);
+					break;
+				}
+				case OutputChannels.LEFT_CHANNEL:
+				{
+					float sample1 = sample * scalefactor;
+					filter1.input_sample(sample1, subbandnumber);
+					break;
+				}
+				default:
+				{
+					float sample2 = sample * channel2_scalefactor;
+					filter1.input_sample(sample2, subbandnumber);
+					break;
+				}
+			}
 	    }
 	    return true;
 	  }
@@ -361,38 +348,9 @@ class LayerIDecoder implements FrameDecoder
 	  {
 	    super(subbandnumber);
 	  }
-	  
-	  /**
-	   * It is possible here that allocation and channel2_allocation are 15, that is however an invalid value
-	   * and the table_factor and table_offset tables do not have entries for those. 
-	   * If such a value occurs... the problem is mainly... what to do about it ? 
-	   * Assume it is some other 
-	   */
-	  public void read_allocation (Bitstream stream, Header header, Crc16 crc) throws JavaLayerException
-	  {
-	 	 allocation = stream.get_bits(4);
-	     channel2_allocation = stream.get_bits(4);
-	     if (crc != null)
-	     {
-		   crc.add_bits (allocation, 4);
-	       crc.add_bits (channel2_allocation, 4);
-	     }
-	     if (allocation != 0)
-	     {
-		    samplelength = allocation + 1;
-	        factor = table_factor[allocation];
-	        offset = table_offset[allocation];
-	     }
-	     if (channel2_allocation != 0)
-	     {
-	        channel2_samplelength = channel2_allocation + 1;
-		    channel2_factor = table_factor[channel2_allocation];
-		    channel2_offset = table_offset[channel2_allocation];
-	     }
-	  }
-	  
-	  public void read_scalefactor(Bitstream stream) throws JavaLayerException
-	  {
+
+		public void read_scalefactor(Bitstream stream)
+		{
 	    if (allocation != 0) scalefactor = scalefactors[stream.get_bits(6)];
 	    if (channel2_allocation != 0) channel2_scalefactor = scalefactors[stream.get_bits(6)];
 	  }

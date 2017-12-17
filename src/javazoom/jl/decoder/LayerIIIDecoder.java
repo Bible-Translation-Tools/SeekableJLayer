@@ -299,8 +299,8 @@ final class LayerIIIDecoder implements FrameDecoder
 	 * Stereo : 256 bits (= 32 bytes)
 	 * @throws JavaLayerException
 	 */
-	private boolean get_side_info() throws JavaLayerException
-	{
+	private void get_side_info()
+    {
 		int ch, gr;
 		if (stream.version() == Header.MPEG1)
 		{
@@ -340,7 +340,7 @@ final class LayerIIIDecoder implements FrameDecoder
 
 						if (si.ch[ch].gr[gr].block_type == 0) {
 							//	 Side info bad: block_type == 0 in split block
-							return false;
+							return;
 						} else if (si.ch[ch].gr[gr].block_type == 2
 								&& si.ch[ch].gr[gr].mixed_block_flag == 0) {
 							si.ch[ch].gr[gr].region0_count = 8;
@@ -394,7 +394,7 @@ final class LayerIIIDecoder implements FrameDecoder
 
 					if (si.ch[ch].gr[0].block_type == 0) {
 						// Side info bad: block_type == 0 in split block
-						return false;
+						return;
 					} else if (si.ch[ch].gr[0].block_type == 2
 							&& si.ch[ch].gr[0].mixed_block_flag == 0) {
 						si.ch[ch].gr[0].region0_count = 8;
@@ -417,7 +417,6 @@ final class LayerIIIDecoder implements FrameDecoder
 				si.ch[ch].gr[0].count1table_select = stream.get_bits(1);
 			}   // for(ch=0; ch<channels; ch++)
 		} // if (header.version() == MPEG1)
-		return true;
 	}
 
 	private void getScaleFactors(int ch, int gr)
@@ -541,12 +540,18 @@ final class LayerIIIDecoder implements FrameDecoder
 		final int scalefac_comp =  gr_info.scalefac_compress;
 
 		if (gr_info.block_type == 2) {
-			if (gr_info.mixed_block_flag == 0)
-				blocktypenumber = 1;
-			else if (gr_info.mixed_block_flag == 1)
-				blocktypenumber = 2;
-			else
-				blocktypenumber = 0;
+            switch (gr_info.mixed_block_flag)
+            {
+                case 0:
+                    blocktypenumber = 1;
+                    break;
+                case 1:
+                    blocktypenumber = 2;
+                    break;
+                default:
+                    blocktypenumber = 0;
+                    break;
+            }
 		} else {
 			blocktypenumber = 0;
 		}
@@ -811,10 +816,10 @@ final class LayerIIIDecoder implements FrameDecoder
             final int reste = j % SSLIMIT;
 			final int quotien = j/SSLIMIT;
             final int abv = is_1d[j];
-            /**
-             * 40% abv==0
-             * 29% abv<T43length
-             * 29% abv>-T43length
+            /*
+              40% abv==0
+              29% abv<T43length
+              29% abv>-T43length
              */
             if (abv == 0) xr[quotien][reste] = 0.0f;
 			else
@@ -924,8 +929,8 @@ final class LayerIIIDecoder implements FrameDecoder
 		// Clear the remainder of the data
 		for (int j=nonZeroCh; j<576; j++)
 		{
-            /**
-             * Another gem of incompetence by E.B. Was written as
+            /*
+              Another gem of incompetence by E.B. Was written as
 
              // Modif E.B 02/22/99
              int reste = j % SSLIMIT;
@@ -1357,9 +1362,9 @@ final class LayerIIIDecoder implements FrameDecoder
 
             final float[] tsOut = out_1d;
 
-            /**
-             * WVB: Originally the following was written
-             *
+            /*
+              WVB: Originally the following was written
+
 
 			// Modif E.B 02/22/99
 
@@ -1372,13 +1377,13 @@ final class LayerIIIDecoder implements FrameDecoder
 				tsOut[cc+sb18] = tsOutCopy[cc];
 			// Fin Modif
 
-             * which is a copy from the tsOut to the tsOutCopy array, so that the indices
-             * for the fastInvMdct are like in C. The inc_mdct routine changes its 'in' parameter
-             * therefre E.B restored it by copying the tsOutCopy back to tsOut.. However he
-             * seems to have forgotten that directly after the copy is restored, the
-             * tsOut array is overwritten in the horendous block below.
-             * Therefore. We currently make the copy (nd will see whether we can get rid of it
-             * later), but do not restore it.
+              which is a copy from the tsOut to the tsOutCopy array, so that the indices
+              for the fastInvMdct are like in C. The inc_mdct routine changes its 'in' parameter
+              therefre E.B restored it by copying the tsOutCopy back to tsOut.. However he
+              seems to have forgotten that directly after the copy is restored, the
+              tsOut array is overwritten in the horendous block below.
+              Therefore. We currently make the copy (nd will see whether we can get rid of it
+              later), but do not restore it.
              */
 
             fastInvMdct(tsOut, sb18, rawout, bt);
@@ -1663,7 +1668,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	private static final int		SSLIMIT=18;
 	private static final int		SBLIMIT=32;
 
-	/************************************************************/
+    /***********************************************************/
 	/*                            L3TABLE                       */
 	/************************************************************/
 	private static class SBI
@@ -1680,28 +1685,28 @@ final class LayerIIIDecoder implements FrameDecoder
 
 	private static class gr_info_s
 	{
-		public int 		   part2_3_length = 0;
-		public int 		   big_values = 0;
-		public int 		   global_gain = 0;
-		public int 		   scalefac_compress = 0;
-		public int 		   window_switching_flag = 0;
-		public int 		   block_type = 0;
-		public int 		   mixed_block_flag = 0;
-		public final int[] table_select= new int[3];
-		public final int[] subblock_gain = new int[3];
-		public int 		   region0_count = 0;
-		public int 		   region1_count = 0;
-		public int 	  	   preflag = 0;
-		public int 		   scalefac_scale = 0;
-		public int 		   count1table_select = 0;
+		int 		   part2_3_length = 0;
+		int 		   big_values = 0;
+		int 		   global_gain = 0;
+		int 		   scalefac_compress = 0;
+		int 		   window_switching_flag = 0;
+		int 		   block_type = 0;
+		int 		   mixed_block_flag = 0;
+		final int[] table_select= new int[3];
+		final int[] subblock_gain = new int[3];
+		int 		   region0_count = 0;
+		int 		   region1_count = 0;
+		int 	  	   preflag = 0;
+		int 		   scalefac_scale = 0;
+		int 		   count1table_select = 0;
 	}
 
 	private static class temporaire
 	{
-		public int[]			scfsi;
-		public gr_info_s[] 		gr;
+		final int[]			scfsi;
+		final gr_info_s[] 		gr;
 
-		public temporaire()
+		temporaire()
 		{
 			scfsi = new int[4];
 			gr = new gr_info_s[2];
@@ -1712,10 +1717,10 @@ final class LayerIIIDecoder implements FrameDecoder
 
 	private static class III_side_info_t
 	{
-		public int 				main_data_begin = 0;
-		public temporaire[]		ch;
+		int 				main_data_begin = 0;
+		final temporaire[]		ch;
 
-		public III_side_info_t()
+		III_side_info_t()
 		{
 			ch = new temporaire[2];
 			ch[0] = new temporaire();
@@ -1725,10 +1730,10 @@ final class LayerIIIDecoder implements FrameDecoder
 
 	private static class Temporaire2
 	{
-		public int[]		 l;         /* [cb] */
-		public int[][]		 s;         /* [window][cb] */
+		final int[]		 l;         /* [cb] */
+		final int[][]		 s;         /* [window][cb] */
 
-		public Temporaire2()
+		Temporaire2()
 		{
 			l = new int[23];
 			s = new int[3][13];
@@ -2128,20 +2133,20 @@ final class LayerIIIDecoder implements FrameDecoder
 		-0.0945741925262f, -0.0409655828852f, -0.0141985685725f, -0.00369997467375f
 		};
 
-	/************************************************************/
+    /***********************************************************/
 	/*                       END OF L3TABLE                     */
-	/************************************************************/
+    /***********************************************************/
 
-	/************************************************************/
+    /***********************************************************/
 	/*                            L3TYPE                        */
-	/************************************************************/
+    /***********************************************************/
 
 
-	/***************************************************************/
+    /**************************************************************/
 	/*                          END OF L3TYPE                      */
-	/***************************************************************/
+    /**************************************************************/
 
-	/***************************************************************/
+    /**************************************************************/
 	/*                             INV_MDCT                        */
 	/***************************************************************/
     private static final float WIN[][] =  {
@@ -2186,7 +2191,7 @@ final class LayerIIIDecoder implements FrameDecoder
                     -8.4752577594E-02f, -6.4157525656E-02f, -4.1131172614E-02f, -1.4790705759E-02f }
     };
 
-	/***************************************************************/
+    /**************************************************************/
 	/*                         END OF INV_MDCT                     */
 	/***************************************************************/
 	private static final int nr_of_sfb_block[][][] =
