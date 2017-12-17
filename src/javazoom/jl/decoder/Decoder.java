@@ -106,20 +106,20 @@ public class Decoder
 	 * Changes the output buffer. This will take effect the next time
 	 * decodeFrame() is called. 
 	 */
-	public void setOutputBuffer(Obuffer out, Bitstream stream) throws IOException
-	{
-		output = out;
-		try
-		{
-			stream.readFrame();
-			initialize(stream);
-			stream.reset();
-		}
-		catch (JavaLayerException e)
-		{
-			throw new IOException(e);
-		}
-	}
+    public void setOutputBuffer(Obuffer out, Bitstream stream) throws IOException
+    {
+        output = out;
+        try
+        {
+            stream.readFrame();
+            initialize(stream);
+            stream.reset();
+        }
+        catch (JavaLayerException e)
+        {
+            throw new IOException(e);
+        }
+    }
 
 	/**
 	 * Retrieves the sample frequency of the PCM samples output
@@ -156,9 +156,7 @@ public class Decoder
 		{
 		case 3:
 			if (l3decoder==null)
-			{
 				l3decoder = new LayerIIIDecoder(stream, filter1, filter2, output, channelChoice);
-			}
 			return l3decoder;
 		case 2:
 			if (l2decoder==null)
@@ -212,7 +210,5 @@ public class Decoder
 		l3decoder=null;
 		l2decoder=null;
 		l1decoder=null;
-		initialized=false;
 	}
 }
-
