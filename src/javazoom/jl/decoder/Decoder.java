@@ -106,7 +106,7 @@ public class Decoder
 	 * @return the sample rate (in Hz) of the samples written to the
 	 *		output buffer when decoding. 
 	 */
-	public int getOutputFrequency() // NO_UCD (unused code)
+	public int getOutputFrequency()
 	{
 		return outputFrequency;
 	}

@@ -41,10 +41,6 @@ final class LayerIIIDecoder implements FrameDecoder
 	private static final float  SCALE_FACTOR = 32760;
 	private final int[]			scalefac_buffer;
 
-	// MDM: removed, as this wasn't being used.
-	//private float               CheckSumOut1d = 0.0f;
-    // WVB: Removed tracking of checksum
-	// private int                 CheckSumHuff = 0;
 	private final int[] 		is_1d;
 	private final float[][][]	ro;
 	private final float[][][]	lr;
@@ -68,9 +64,9 @@ final class LayerIIIDecoder implements FrameDecoder
 	private final int 				last_channel;
 	private final int					sfreq;
 
-	public LayerIIIDecoder(Bitstream stream0,
-			SynthesisFilter filtera, SynthesisFilter filterb,
-			Obuffer buffer0, int which_ch0)
+	LayerIIIDecoder(Bitstream stream0,
+					SynthesisFilter filtera, SynthesisFilter filterb,
+					Obuffer buffer0, int which_ch0)
 	{
 		is_1d = new int[SBLIMIT*SSLIMIT+4];
 		ro = new float[2][SBLIMIT][SSLIMIT];
@@ -191,8 +187,8 @@ final class LayerIIIDecoder implements FrameDecoder
 	/**
 	 * Decode one frame, filling the buffer with the output samples.
 	 */
-    public void decodeFrame() throws JavaLayerException
-    {
+    public void decodeFrame()
+	{
         final int nSlots = stream.slots();
         final int flush_main;
         int gr, ch, ss, sb, sb18;
@@ -837,8 +833,7 @@ final class LayerIIIDecoder implements FrameDecoder
 				}
 				else
 				{
-					if (abv > 0) xr[quotien][reste] = g_gain * (float)Math.pow(abv, D43);
-					else xr[quotien][reste] = -g_gain * (float)Math.pow(-abv, D43);
+					xr[quotien][reste] = g_gain * (float)Math.pow(abv, D43);
 				}
 			}
 		}

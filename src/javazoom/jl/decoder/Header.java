@@ -228,7 +228,6 @@ class Header
 			if (h_mode == SINGLE_CHANNEL) offset=13-4;
 			else offset = 21-4;		  
 		}
-		byte[] h_vbr_toc;
 		try
 		{
 			System.arraycopy(firstframe, offset, tmp, 0, 4);
@@ -240,7 +239,7 @@ class Header
 				h_vbr_frames = -1;
 				h_vbr_bytes = -1;
 //				h_vbr_scale = -1;
-				h_vbr_toc = new byte[100];
+
 
 				int length = 4;
 				// Read flags.
@@ -264,8 +263,7 @@ class Header
 				// Read TOC (if available).
 				if ((flags[3] & (byte) (1 << 2)) != 0)
 				{
-					System.arraycopy(firstframe, offset + length, h_vbr_toc, 0, h_vbr_toc.length);
-					length += h_vbr_toc.length;	
+					length += 100;
 				}
 				// Read scale (if available).
 				if ((flags[3] & (byte) (1 << 3)) != 0)
@@ -289,13 +287,10 @@ class Header
 			// Is "VBRI" ?
 			if (vbri.equals(new String(tmp)))
 			{
-				//Yes.
 				h_vbr = true;
 				h_vbr_frames = -1;
 				h_vbr_bytes = -1;
-//				h_vbr_scale = -1;
-				h_vbr_toc = new byte[100];
-				// Bytes.				
+				// Bytes.
 				int length = 4 + 6;
 				System.arraycopy(firstframe, offset + length, tmp, 0, tmp.length);
 				h_vbr_bytes = (tmp[0] << 24)&0xFF000000 | (tmp[1] << 16)&0x00FF0000 | (tmp[2] << 8)&0x0000FF00 | tmp[3]&0x000000FF;

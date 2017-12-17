@@ -499,10 +499,6 @@ final class HuffcodeTable
 	 */
 	public static void huffmanDecoder(HuffcodeTable h, final Xyvw xyvw, BitReserve br)
 	{
-        if (h==null)
-        {
-            System.out.println("WTF");
-        }
         Node point=h.root;
 		if (point==null)  // One of the dummy tables.
 		{ 

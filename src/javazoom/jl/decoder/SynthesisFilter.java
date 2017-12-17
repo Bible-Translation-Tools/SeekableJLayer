@@ -424,6 +424,7 @@ final class SynthesisFilter
 	{
 		final float[] vp = actual_v;	
 		//int inc = v_inc;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 
@@ -456,6 +457,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples1( )
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 		for( int i=0; i<32; i++)
@@ -489,6 +491,7 @@ final class SynthesisFilter
 		final float[] vp = actual_v;
 
 		//int inc = v_inc;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 
@@ -526,6 +529,7 @@ final class SynthesisFilter
 		final float[] vp = actual_v;
 
 		//int inc = v_inc;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 
@@ -563,6 +567,7 @@ final class SynthesisFilter
 		final float[] vp = actual_v;
 
 		//int inc = v_inc;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 
@@ -600,6 +605,7 @@ final class SynthesisFilter
 		final float[] vp = actual_v;
 
 		//int inc = v_inc;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 
@@ -631,6 +637,7 @@ final class SynthesisFilter
 	{
 		final float[] vp = actual_v;	
 		//int inc = v_inc;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 
@@ -666,6 +673,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples7()
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 
@@ -699,6 +707,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples8()
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 		for( int i=0; i<32; i++)
@@ -731,6 +740,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples9()
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 		for( int i=0; i<32; i++)
@@ -762,6 +772,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples10()
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 		for( int i=0; i<32; i++)
@@ -793,6 +804,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples11()
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 		for( int i=0; i<32; i++)
@@ -824,6 +836,7 @@ final class SynthesisFilter
 	{
 		final float[] vp = actual_v;	
 		//int inc = v_inc;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 
@@ -859,6 +872,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples13()
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 		for( int i=0; i<32; i++)
@@ -889,6 +903,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples14()
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 		for( int i=0; i<32; i++)
@@ -919,6 +934,7 @@ final class SynthesisFilter
 	private void compute_pcm_samples15()
 	{
 		final float[] vp = actual_v;
+		//noinspection UnnecessaryLocalVariable
 		final float[] tmpOut = _tmpOut;
 		int dvp =0;
 		for( int i=0; i<32; i++)
@@ -1122,7 +1138,7 @@ final class SynthesisFilter
 		int size = Sfd.SFD.length / 16;
 		D16[] split = new D16[size];
 		for (int i=0; i<size; i++)
-			split[i] = subArray(i* 16, 16);
+			split[i] = subArray(i* 16);
 		return split;
 	}
 
@@ -1131,11 +1147,11 @@ final class SynthesisFilter
 	 * 
 	 * @param offs    The offset in the array that corresponds to
 	 *				the first index of the subarray.
-	 * @param len    The number of indeces in the subarray.
 	 * @return The subarray, which may be of length 0.
 	 */
-	static private D16 subArray(final int offs, int len)
+	static private D16 subArray(final int offs)
 	{
+		int len=16;
 		if (offs+len > Sfd.SFD.length)
 			len = Sfd.SFD.length-offs;
 		if (len < 0)
