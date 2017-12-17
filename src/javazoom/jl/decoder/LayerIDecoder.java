@@ -226,9 +226,6 @@ class LayerIDecoder implements FrameDecoder
 			samplenumber = 0;
 		}
 
-		/**
-		 * @throws JavaLayerException
-		 */
 		public void read_allocation(Bitstream stream, Crc16 crc) throws JavaLayerException
 		{
 			if ((allocation = stream.get_bits (4)) == 15)

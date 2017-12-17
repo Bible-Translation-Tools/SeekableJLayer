@@ -600,10 +600,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 		}
 
 
-		/**
-		 * @throws JavaLayerException
-		 *
-		 */
 		public void read_allocation(Bitstream stream, Crc16 crc)
 		{
 			int length = get_allocationlength(stream);
@@ -612,10 +608,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 				crc.add_bits(allocation, length);  
 		}
 
-		/**
-		 * @throws JavaLayerException
-		 *
-		 */
 		void read_scalefactor_selection(Bitstream stream, Crc16 crc)
 		{
 			if (allocation != 0)
@@ -625,10 +617,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			}
 		}
 
-		/**
-		 * @throws JavaLayerException
-		 *
-		 */
 		public void read_scalefactor (Bitstream stream) throws JavaLayerException
 		{
 			if (allocation != 0)
@@ -656,10 +644,6 @@ final class LayerIIDecoder extends LayerIDecoder implements FrameDecoder
 			}
 		}
 
-		/**
-		 * @throws JavaLayerException
-		 *
-		 */
 		public boolean read_sampledata (Bitstream stream)
 		{
 			if (allocation != 0)

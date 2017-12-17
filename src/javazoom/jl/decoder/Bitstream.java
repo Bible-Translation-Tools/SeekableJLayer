@@ -35,7 +35,6 @@
 
 package javazoom.jl.decoder;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -167,7 +166,6 @@ public final class Bitstream extends Header
 	 * Parse ID3v2 tag header to find out size of ID3v2 frames. 
 	 * @param in MP3 InputStream
 	 * @return size of ID3v2 frames + header
-	 * @throws IOException
 	 * @author JavaZOOM
 	 */
 	private int readID3v2Header(InputStream in) throws IOException
@@ -187,10 +185,6 @@ public final class Bitstream extends Header
 		return size+10;
 	}
 
-	/**
-	 * Close the Bitstream.
-	 * @throws IOException
-	 */
 	public void close() throws IOException
 	{
 		source.close();
@@ -198,7 +192,6 @@ public final class Bitstream extends Header
 
 	/**
 	 * Reads and parses the next frame from the input source.
-	 * @throws EOFException
 	 */
 	public void readFrame() throws JavaLayerException, IOException
     {
@@ -278,7 +271,6 @@ public final class Bitstream extends Header
 	 * They are stored in the headerstring.
 	 * syncmod allows Synchro flag ID
 	 * The returned value is False at the end of stream.
-	 * @throws BitStreamEOF 
 	 */
 	int syncHeader(byte syncmode) throws JavaLayerException, IOException
     {
@@ -378,7 +370,6 @@ public final class Bitstream extends Header
 	 * Read bits from buffer into the lower bits of an unsigned int.
 	 * The LSB contains the latest read bit of the stream.
 	 * (1 <= number_of_bits <= 16)
-	 * @throws JavaLayerException
 	 */
 	int get_bits(int number_of_bits)
 	{
