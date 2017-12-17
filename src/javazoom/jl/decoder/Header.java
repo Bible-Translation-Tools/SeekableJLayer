@@ -31,7 +31,6 @@
  */
 package javazoom.jl.decoder;
 
-import java.io.EOFException;
 import java.io.IOException;
 
 /**
@@ -71,12 +70,9 @@ class Header
 	private int				h_mode;
 	private int				h_sample_frequency;
 	private int				h_number_of_subbands, h_intensity_stereo_bound;
-//	private boolean			h_copyright, h_original;
-	// VBR support added by E.B
 	private final static int[] H_VBR_SAMPLES_PER_FRAME = {-1, 384, 1152, 1152};
 	private boolean			h_vbr;
 	private int				h_vbr_frames;
-//	private int				h_vbr_scale;
 	private int				h_vbr_bytes;
 	private byte[]			h_vbr_toc;
 
@@ -86,8 +82,6 @@ class Header
 	private short			checksum;
 	private int				framesize;
 	private int				nSlots;
-
-//	private int				_headerstring = -1; // E.B
 
 	Header()
 	{
@@ -111,13 +105,11 @@ class Header
 		buffer.append(' ');
 		buffer.append(bitrate_string());
 
-		String s =  buffer.toString();
-		return s;
+		return buffer.toString();
 	}
 
 	/**
 	 * Read a 32-bit header from the bitstream, including the framedata itself.
-	 * @throws EOFException 
 	 */
 	void read_header(Bitstream stream, Crc16[] crcp) throws JavaLayerException, IOException
     {
@@ -127,7 +119,6 @@ class Header
 		do
 		{
 			headerstring = stream.syncHeader(syncmode);
-//			_headerstring = headerstring; // E.B
 			if (syncmode == Bitstream.INITIAL_SYNC)
 			{
 				h_version = ((headerstring >>> 19) & 1);
@@ -239,7 +230,6 @@ class Header
 
 	/**
 	 * Parse frame to extract optionnal VBR frame.
-	 * @param firstframe
 	 * @author E.B (javalayer@javazoom.net)
 	 */
 	void parseVBR(byte[] firstframe) throws JavaLayerException
@@ -345,34 +335,11 @@ class Header
 	}
 
 	// Functions to query header contents:
-	/**
-	 * Returns version.
-	 */
 	int version() { return h_version; }
-
-	/**
-	 * Returns Layer ID.
-	 */
 	int layer() { return h_layer; }
-
-	/**
-	 * Returns bitrate index.
-	 */
 	int bitrate_index() { return h_bitrate_index; }
-
-	/**
-	 * Returns Sample Frequency.
-	 */
 	int sample_frequency() { return h_sample_frequency; }
-
-	/**
-	 * Returns Frequency.
-	 */
 	int frequency() {return frequencies[h_version][h_sample_frequency];}
-
-	/**
-	 * Returns Mode.
-	 */
 	int mode() { return h_mode; }
 
 	/**
@@ -390,14 +357,8 @@ class Header
 	 */
 	boolean checksum_ok () { return (checksum == crc.checksum()); }
 
-	/**
-	 * Returns Slots.
-	 */
 	int slots() { return nSlots; }
 
-	/**
-	 * Returns Mode Extension.
-	 */
 	int mode_extension() { return h_mode_extension; }
 
 	// E.B -> private to public

@@ -93,19 +93,9 @@ public final class Bitstream extends Header
 	 * Number (0-31, from MSB to LSB) of next bit for get_bits()
 	 */
 	private int				bitindex;
-
-	/**
-	 * The current specified syncword
-	 */
 	private int				syncword;
 
-	/**
-	 *
-	 */
 	private boolean			single_ch_mode;
-	//private int 			current_frame_number;
-	//private int				last_frame_number;
-
 	private final int		bitmask[] = {0,	// dummy
 			0x00000001, 0x00000003, 0x00000007, 0x0000000F,
 			0x0000001F, 0x0000003F, 0x0000007F, 0x000000FF,
@@ -114,14 +104,8 @@ public final class Bitstream extends Header
 			0x0001FFFF };
 
 	private final SeekableInput source;
-
 	private final byte				syncbuf[] = new byte[4];
-
 	private final Crc16[]			crc = new Crc16[1];
-
-	// WVB - we removed this field since it is never used
-	// private byte[]					rawid3v2 = null;
-	
 	private boolean					firstframe = true;
 
 
@@ -214,9 +198,7 @@ public final class Bitstream extends Header
 
 	/**
 	 * Reads and parses the next frame from the input source.
-	 * @return the Header describing details of the frame read,
-	 *	or null if the end of the stream has been reached.
-	 * @throws EOFException 
+	 * @throws EOFException
 	 */
 	public void readFrame() throws JavaLayerException, IOException
     {
@@ -251,12 +233,6 @@ public final class Bitstream extends Header
 		}
 	}
 
-	/**
-	 * Read next MP3 frame.
-	 * @return MP3 frame header.
-	 * @throws JavaLayerException
-	 * @throws EOFException 
-	 */
 	private void readNextFrame() throws JavaLayerException, IOException
     {
 		if (framesize != -1) return;
@@ -268,13 +244,10 @@ public final class Bitstream extends Header
 	 * Unreads the bytes read from the frame.
 	 * WVB - This is also crap since we had a buffered stream already. There is thus no need to unread specific data.
 	 */
-	// REVIEW: add new error codes for this.
 	void unreadFrame()
 	{
 		if (wordpointer==-1 && bitindex==-1 && (framesize>0))
-		{
 			source.unread(framesize);
-		}
 	}
 
 	/**

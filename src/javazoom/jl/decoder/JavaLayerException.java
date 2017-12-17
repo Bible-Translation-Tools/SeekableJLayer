@@ -45,7 +45,7 @@ public class JavaLayerException extends Exception
         exception=t;
     }
 
-    JavaLayerException(String msg, Throwable t)
+    public JavaLayerException(String msg, Throwable t)
 	{
 		super(msg);
 		exception = t;

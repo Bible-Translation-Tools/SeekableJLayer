@@ -20,6 +20,8 @@
 
 package javazoom.jl.decoder;
 
+import java.io.IOException;
+
 /**
  * The <code>Decoder</code> class encapsulates the details of
  * decoding an MPEG audio frame. 
@@ -34,7 +36,7 @@ public class Decoder
 	 * The Obuffer instance that will receive the decoded
 	 * PCM samples.
 	 */
-	private Obuffer			output;
+	private Obuffer			        output;
 
 	/**
 	 * Synthesis filter for the left channel.
@@ -72,18 +74,23 @@ public class Decoder
 
 	/**
 	 * Decodes one frame from an MPEG audio bitstream.
-	 *
 	 * @param stream		The bitstream that provides the bits for the body of the frame.
-	 * 
-	 * @return A SampleBuffer containing the decoded samples.
-	 * @throws JavaLayerException
 	 */
-	public Obuffer decodeFrame(Bitstream stream) throws JavaLayerException
+	public void decodeFrame(Bitstream stream) throws JavaLayerException
 	{
+		//>
+		// WVB - It is pointless to check the initialisation with each frame we decode.
+		// Better make sure it is initialized by calling initialize(stream) in advance.
+		// Grunt... the initialisation can only take place when the frame is actually read.
+		// That means that we might need to restart the stream after having read the first frame.
+		// Seemns like a fair deal I guess.
 		if (!initialized)
-			initialize(stream);
+			throw new JavaLayerException("Decoder not initialized",null);
+		//<
 
 		int layer = stream.layer();
+		// WVB - still bummed about having the retrieve the decoder at each new run
+		// this is utterly stupid what happens here.
 		final FrameDecoder decoder = retrieveDecoder( stream, layer);
 		try
         {
@@ -93,16 +100,25 @@ public class Decoder
         {
             throw new DecoderOutOfBounds(oob);
         }
-		return output;
 	}
 
 	/**
 	 * Changes the output buffer. This will take effect the next time
 	 * decodeFrame() is called. 
 	 */
-	public void setOutputBuffer(Obuffer out)
+	public void setOutputBuffer(Obuffer out, Bitstream stream) throws IOException
 	{
 		output = out;
+		try
+		{
+			stream.readFrame();
+			initialize(stream);
+			stream.reset();
+		}
+		catch (JavaLayerException e)
+		{
+			throw new IOException(e);
+		}
 	}
 
 	/**
@@ -162,7 +178,7 @@ public class Decoder
 		throw new UnsuportedLayer();
 	}
 
-	private void initialize(Header header) throws JavaLayerException
+	private void initialize(Header header)
 	{
 		// REVIEW: allow customizable scale factor
 		int mode = header.mode();
