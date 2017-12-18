@@ -1026,9 +1026,7 @@ final class SynthesisFilter
 	public void calculate_pcm_samples_layer_iii(Obuffer buffer)
 	{
         if (spectralContent)
-        {
             buffer.appendSamples(channel,samples);
-        }
         else
         {
             compute_new_v();
