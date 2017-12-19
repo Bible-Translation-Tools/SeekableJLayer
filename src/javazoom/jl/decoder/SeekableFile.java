@@ -1,6 +1,3 @@
-/*
-  @author Werner Van Belle
- */
 package javazoom.jl.decoder;
 
 import java.io.File;
