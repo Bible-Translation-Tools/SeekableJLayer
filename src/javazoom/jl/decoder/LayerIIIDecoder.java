@@ -37,32 +37,32 @@ package javazoom.jl.decoder;
 
 final class LayerIIIDecoder implements FrameDecoder
 {
-	private final static double D43 = 4.0/3.0;
-	private static final float  SCALE_FACTOR = 32760;
-	private final int[]			scalefac_buffer;
+	private final static double   D43 = 4.0/3.0;
+	private static final float    SCALE_FACTOR = 32760;
+	private final int[]			  scalefac_buffer;
 
-	private final int[] 		is_1d;
-	private final float[][][]	ro;
-	private final float[][][]	lr;
-	private final float[]		out_1d;
-	private final float[][]		prevblck;
-	private final float[][]		k;
-	private final Bitstream 	stream;
-	private final SynthesisFilter 	filter1, filter2;
-	private final Obuffer 			buffer;
-	private final int 				which_channels;
-	private BitReserve 				br;
-	private final III_side_info_t 	si;
+	private final int[] 		  is_1d;
+	private final float[][][]	  ro;
+	private final float[][][]	  lr;
+	private final float[]		  out_1d;
+	private final float[][]		  prevblck;
+	private final float[][]		  k;
+	private final Bitstream 	  stream;
+	private final SynthesisFilter filter1, filter2;
+	private final Obuffer 		  buffer;
+	private final int 			  which_channels;
+	private BitReserve 			  br;
+	private final III_side_info_t si;
 
-    private final Temporaire2[]     scalefac;
+    private final Temporaire2[]   scalefac;
 
-	private final int 				max_gr;
-	private int					frame_start;
-	private int 				part2_start;
-	private final int 				channels;
-	private final int 				first_channel;
-	private final int 				last_channel;
-	private final int					sfreq;
+	private final int 			  max_gr;
+	private int					  frame_start;
+	private int 				  part2_start;
+	private final int 			  channels;
+	private final int 			  first_channel;
+	private final int 			  last_channel;
+	private final int			  sfreq;
 
 	LayerIIIDecoder(Bitstream stream0,
 					SynthesisFilter filtera, SynthesisFilter filterb,

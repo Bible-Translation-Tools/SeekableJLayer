@@ -30,7 +30,7 @@ import java.io.IOException;
  * @version 0.0.7 12/12/99
  * @since	0.0.5
  */
-public class Decoder 
+public class Decoder
 {
 	/**
 	 * The Obuffer instance that will receive the decoded
@@ -51,6 +51,19 @@ public class Decoder
 
 	final private int channelChoice;
     final private boolean spectralContent;
+
+    private float[] eqGains;
+	public void setEq(float[] gain)
+	{
+		eqGains=gain;
+		updateFilterEqs();
+	}
+
+	private void updateFilterEqs()
+	{
+		if (leftFilter!=null) leftFilter.setEq(eqGains);
+		if (rightFilter!=null) rightFilter.setEq(eqGains);
+	}
 
 	public Decoder(int channelChoice, boolean spectralContent)
 	{
@@ -160,12 +173,13 @@ public class Decoder
 		leftFilter = new SynthesisFilter(0,spectralContent);
 		if (channels==2)
 			rightFilter = new SynthesisFilter(1,spectralContent);
+		updateFilterEqs();
 		outputChannels = channels;
 		outputFrequency = header.frequency();
 		initialized = true;
 	}
 
-	public void seek_notify() 
+	public void seek_notify()
 	{
 		if (l3decoder!=null) l3decoder.seek_notify();
 		if (l2decoder!=null) l2decoder.seek_notify();

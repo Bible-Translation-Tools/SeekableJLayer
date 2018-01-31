@@ -43,6 +43,8 @@ package javazoom.jl.decoder;
  * that we would pass two arrays to the OBuffer, and that the filter would not be responsible for knowing the OBuffer.
  */
 
+import java.util.Arrays;
+
 /**
  * A class for the synthesis filter bank.
  * This class does a fast downsampling from 32, 44.1 or 48 kHz to 8 kHz, if ULAW is defined.
@@ -50,8 +52,8 @@ package javazoom.jl.decoder;
  */
 final class SynthesisFilter
 {
-	private final float[] v1;
-	private final float[] v2;
+	private final float[] v1 = new float[512];
+	private final float[] v2 = new float[512];
 	private float[]		  actual_v;					// v1 or v2
 	private int 		  actual_write_pos;	   		// 0-15
 	final float[]		  samples  = new float[32];	// 32 new input subband samples
@@ -61,8 +63,6 @@ final class SynthesisFilter
     SynthesisFilter(int channelnumber, boolean spectralContent)
 	{  	 
 		d16 = splitArray();
-		v1 = new float[512];
-		v2 = new float[512];
 		channel = channelnumber;
         this.spectralContent=spectralContent;
 		reset();
@@ -70,12 +70,9 @@ final class SynthesisFilter
 
 	private void reset()
 	{
-		for (int p=0;p<512;p++) 
-			v1[p] = v2[p] = 0.0f;
-
-		for (int p2=0;p2<32;p2++) 
-			samples[p2] = 0.0f;
-
+		Arrays.fill(v1,0);
+		Arrays.fill(v2,0);
+		Arrays.fill(samples,0);
 		actual_v = v1;
 		actual_write_pos = 15;
 	}
@@ -1021,14 +1018,18 @@ final class SynthesisFilter
 	}
 
 	/**
-	 * Calculate 32 PCM samples and put the into the Obuffer-object.
+	 * Calculate 32 PCM samples and put the into the output buffer.
+	 * If we are interested in the spectral content don't compute the filter.
 	 */
 	public void calculate_pcm_samples_layer_iii(Obuffer buffer)
 	{
+		// Here we should apply the equalisation and gain modification if necessary.
         if (spectralContent)
             buffer.appendSamples(channel,samples);
         else
         {
+        	for(int i=0;i<32;++i)
+        		samples[i]*=channelGain[i];
             compute_new_v();
             compute_pcm_samples(buffer);
             actual_write_pos = (actual_write_pos + 1) & 0xf;
@@ -1078,7 +1079,7 @@ final class SynthesisFilter
 	private static final float COS_3_8 =(float) (1.0 / (2.0 * Math.cos(MY_PI * 3.0  / 8.0)));
 	private static final float COS_1_4 =(float) (1.0 / (2.0 * Math.cos(MY_PI / 4.0)));
 
-	/** 
+	/**
 	 * d[] split into subarrays of length 16. This provides for
 	 * faster access by allowing a block of 16 to be addressed
 	 * with constant offset. 
@@ -1158,5 +1159,12 @@ final class SynthesisFilter
 		float[] subarray = new float[len];
         System.arraycopy(Sfd.SFD, offs, subarray, 0, len);
 		return new D16(subarray);
+	}
+
+
+	private float[] channelGain;
+	public void setEq(float[] eqGains)
+	{
+		channelGain=eqGains;
 	}
 }
