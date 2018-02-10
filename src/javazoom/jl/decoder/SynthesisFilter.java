@@ -68,7 +68,7 @@ final class SynthesisFilter
 		reset();
 	}
 
-	private void reset()
+	void reset()
 	{
 		Arrays.fill(v1,0);
 		Arrays.fill(v2,0);

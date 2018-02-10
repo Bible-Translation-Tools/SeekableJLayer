@@ -181,6 +181,8 @@ public class Decoder
 
 	public void seek_notify()
 	{
+		if (leftFilter!=null) leftFilter.reset();
+		if (rightFilter!=null) rightFilter.reset();
 		if (l3decoder!=null) l3decoder.seek_notify();
 		if (l2decoder!=null) l2decoder.seek_notify();
 		if (l1decoder!=null) l1decoder.seek_notify();
@@ -188,6 +190,8 @@ public class Decoder
 
 	public void reset() 
 	{
+		if (leftFilter!=null) leftFilter.reset();
+		if (rightFilter!=null) rightFilter.reset();
 		l3decoder=null;
 		l2decoder=null;
 		l1decoder=null;
