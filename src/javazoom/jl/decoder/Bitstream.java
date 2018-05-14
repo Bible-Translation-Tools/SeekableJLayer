@@ -117,7 +117,7 @@ public final class Bitstream extends Header
 	public Bitstream(SeekableInput in)
 	{
 		source = in;
-		reset();
+		reset(false);
 	}
 
 	/**
@@ -419,8 +419,10 @@ public final class Bitstream extends Header
 		single_ch_mode = ((syncword0 & 0x000000C0) == 0x000000C0);
 	}
 
-	public void reset() 
+	public void reset(boolean inputFileAsWell)
 	{
+		if (inputFileAsWell)
+			source.seek(0);
 		loadID3v2(source);
 		firstframe = true;
 		closeFrame();

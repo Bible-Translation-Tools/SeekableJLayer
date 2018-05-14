@@ -105,7 +105,7 @@ public class Decoder
         {
             stream.readFrame();
             initialize(stream);
-            stream.reset();
+            stream.reset(true);
         }
         catch (JavaLayerException e)
         {
