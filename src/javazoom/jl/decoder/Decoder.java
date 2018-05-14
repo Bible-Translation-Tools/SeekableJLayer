@@ -52,7 +52,7 @@ public class Decoder
 	final private int channelChoice;
     final private boolean spectralContent;
 
-    private float[] eqGains;
+    private float[] eqGains=new float[32];
 	public void setEq(float[] gain)
 	{
 		eqGains=gain;
@@ -69,6 +69,8 @@ public class Decoder
 	{
 		this.channelChoice=channelChoice;
         this.spectralContent=spectralContent;
+		for(int i=0;i<32;++i)
+			eqGains[i]=1;
 	}
 
 	/**
