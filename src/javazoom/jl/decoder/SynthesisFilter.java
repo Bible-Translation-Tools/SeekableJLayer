@@ -451,6 +451,7 @@ final class SynthesisFilter
 			dvp += 16;
 		} // for
 	}
+
 	private void compute_pcm_samples1( )
 	{
 		final float[] vp = actual_v;
