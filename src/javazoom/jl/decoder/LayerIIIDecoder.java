@@ -1662,7 +1662,7 @@ final class LayerIIIDecoder implements FrameDecoder
 	private static final int		SSLIMIT=18;
 	private static final int		SBLIMIT=32;
 
-	/**********************************************************/
+	/*********************************************************/
 	/*                            L3TABLE                       */
 	/************************************************************/
 	private static class SBI
